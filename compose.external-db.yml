@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # SupportHub Application (External Database)
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DATABASE_URL=${DATABASE_URL}  # External database connection string
+      - SESSION_SECRET=${SESSION_SECRET}
+      - VERIFIED_SENDER_EMAIL=${VERIFIED_SENDER_EMAIL}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - TRUST_PROXY=1
+    volumes:
+      - app_uploads:/app/uploads
+      - app_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./configs/nginx-compose.conf:/etc/nginx/nginx.conf:ro
+      - ssl_certs:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  app_uploads:
+    driver: local
+  app_logs:
+    driver: local
+  ssl_certs:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
