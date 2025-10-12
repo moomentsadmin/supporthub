@@ -46,8 +46,8 @@ COPY --from=builder --chown=supporthub:nodejs /app/dist ./dist
 COPY --from=builder --chown=supporthub:nodejs /app/server ./server
 COPY --from=builder --chown=supporthub:nodejs /app/shared ./shared
 
-# Copy other necessary files
-COPY --chown=supporthub:nodejs drizzle.config.ts ./
+# Copy other necessary files from builder stage
+COPY --from=builder --chown=supporthub:nodejs /app/drizzle.config.ts ./
 
 # Create necessary directories
 RUN mkdir -p uploads logs && \
