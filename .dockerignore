@@ -1,0 +1,83 @@
+# Environment files (use Docker environment variables instead)
+.env
+.env.*
+!.env.production.example
+!.env.docker.example
+
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Replit
+.replit
+replit.nix
+.upm
+.config
+
+# Testing
+coverage
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Uploads and user data (will be in volumes)
+uploads/*
+!uploads/.gitkeep
+
+# Backups
+backups/
+*.tar.gz
+*.zip
+
+# Documentation and scripts (not needed in container)
+docs/
+scripts/
+*.md
+!README.md
+
+# Test and debug files
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+test_*.txt
+*_test.txt
+debug*.html
+test*.html
+*cookies.txt
+*session.txt
+admin*.txt
+agent*.txt
+customer*.txt
+*headers.txt
+
+# Config files for development only
+ecosystem.config.js
+pm2.config.js
