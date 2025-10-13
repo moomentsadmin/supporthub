@@ -6,7 +6,7 @@ import { registerRoutes } from "./routes";
 import { registerExtendedRoutes } from "./routes-extended";
 import { createAdminRoutes } from "./admin-routes";
 import { registerCustomerRoutes } from "./customer-routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { log } from "./logger";
 import { validateDatabaseConnection } from "./db";
 
 const app = express();
@@ -352,8 +352,10 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
+    const { serveStatic } = await import("./static");
     serveStatic(app);
   }
 
