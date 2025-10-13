@@ -18,8 +18,8 @@ COPY . .
 # Build the client (frontend)
 RUN npx vite build
 
-# Build the server (backend) with vite marked as external
-RUN npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --external:vite --external:../vite.config.ts
+# Build the server (backend) using production entry point (no vite imports)
+RUN npx esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --outfile=dist/index.js
 
 # Production stage
 FROM node:20-alpine AS production
