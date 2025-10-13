@@ -80,13 +80,10 @@ certbot certonly \
         cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem
         
         echo -e "${GREEN}✅ Certificates installed${NC}"
-        echo -e "${GREEN}✅ Reloading Nginx configuration...${NC}\n"
-        
-        # Signal nginx to reload (this will be picked up by the restart policy)
-        # We can't directly reload nginx from this container, so we just log success
         echo -e "${GREEN}✅ SSL setup complete!${NC}"
         echo -e "${GREEN}🔒 Your site is now accessible at: https://${DOMAIN}${NC}\n"
-        echo -e "${YELLOW}Note: Nginx will automatically use the new certificates${NC}\n"
+        
+        exit 0
     } || {
         echo -e "${RED}❌ Failed to obtain Let's Encrypt certificate${NC}"
         echo -e "${YELLOW}Using self-signed certificate as fallback${NC}\n"
@@ -102,4 +99,9 @@ certbot certonly \
         echo -e "${YELLOW}    - Domain not pointing to this server${NC}"
         echo -e "${YELLOW}    - Ports 80/443 not accessible from internet${NC}"
         echo -e "${YELLOW}    - Rate limit reached (5 certs/week per domain)${NC}\n"
+        
+        exit 0
     }
+
+echo -e "${GREEN}✅ SSL initialization completed${NC}"
+exit 0
