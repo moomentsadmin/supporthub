@@ -64,18 +64,21 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./scripts/nginx-entrypoint.sh:/nginx-entrypoint.sh:ro
       - nginx_ssl:/etc/nginx/ssl
       - certbot_www:/var/www/certbot
       - certbot_conf:/etc/letsencrypt
+    entrypoint: ["/bin/sh", "/nginx-entrypoint.sh"]
     depends_on:
       - app
     networks:
       - supporthub_network
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/health", "||", "exit", "1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
 
   # SSL Certificate Setup (runs once on deployment)
   ssl_init:
