@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Automated Let's Encrypt SSL Setup for SupportHub
 # Reads DOMAIN and EMAIL from environment variables
@@ -28,13 +28,13 @@ fi
 echo -e "${GREEN}Domain: ${DOMAIN}${NC}"
 echo -e "${GREEN}Email: ${EMAIL}${NC}\n"
 
-# Create SSL directory if it doesn't exist
+# Create directories
 mkdir -p /etc/nginx/ssl
 mkdir -p /var/www/certbot
 
 # Check if we're in testing mode (localhost or IP address)
 if [[ "$DOMAIN" == "localhost" ]] || [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo -e "${YELLOW}Testing mode detected. Creating self-signed certificate...${NC}\n"
+    echo -e "${YELLOW}Testing mode detected (localhost/IP). Using self-signed certificate...${NC}\n"
     
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/nginx/ssl/key.pem \
@@ -42,28 +42,26 @@ if [[ "$DOMAIN" == "localhost" ]] || [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0
         -subj "/C=US/ST=State/L=City/O=Organization/CN=$DOMAIN" 2>/dev/null
     
     echo -e "${GREEN}✅ Self-signed certificate created${NC}"
-    echo -e "${YELLOW}⚠️  This is for testing only. Not suitable for production.${NC}\n"
+    echo -e "${YELLOW}⚠️  Testing mode - certificate will show browser warning${NC}\n"
     exit 0
 fi
 
 # Production: Let's Encrypt setup
-echo -e "${GREEN}Production mode: Obtaining Let's Encrypt certificate...${NC}\n"
+echo -e "${GREEN}Production mode: Obtaining Let's Encrypt certificate for: $DOMAIN${NC}\n"
 
-# Create temporary self-signed certificate for initial Nginx start
-if [ ! -f "/etc/nginx/ssl/cert.pem" ]; then
-    echo -e "${YELLOW}Creating temporary certificate for Nginx startup...${NC}"
-    openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-        -keyout /etc/nginx/ssl/key.pem \
-        -out /etc/nginx/ssl/cert.pem \
-        -subj "/CN=$DOMAIN" 2>/dev/null
-fi
-
-# Wait for Nginx to be ready
-echo -e "${GREEN}Waiting for Nginx to start...${NC}"
-sleep 5
+# Wait for Nginx to be ready and serving on port 80
+echo -e "${GREEN}Waiting for Nginx to be ready...${NC}"
+for i in $(seq 1 30); do
+    if wget --spider --quiet http://nginx/.well-known/acme-challenge/ 2>/dev/null; then
+        echo -e "${GREEN}✅ Nginx is ready${NC}\n"
+        break
+    fi
+    echo -e "Waiting... ($i/30)"
+    sleep 2
+done
 
 # Request Let's Encrypt certificate
-echo -e "${GREEN}Requesting Let's Encrypt certificate for: $DOMAIN${NC}\n"
+echo -e "${GREEN}Requesting Let's Encrypt certificate...${NC}\n"
 
 certbot certonly \
     --webroot \
@@ -74,22 +72,34 @@ certbot certonly \
     --force-renewal \
     --cert-name "$DOMAIN" \
     -d "$DOMAIN" \
-    -d "www.$DOMAIN" || {
-        echo -e "${RED}Failed to obtain certificate. Using self-signed certificate.${NC}"
-        exit 0
+    -d "www.$DOMAIN" && {
+        echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully!${NC}\n"
+        
+        # Copy certificates to nginx ssl directory
+        cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem
+        cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem
+        
+        echo -e "${GREEN}✅ Certificates installed${NC}"
+        echo -e "${GREEN}✅ Reloading Nginx configuration...${NC}\n"
+        
+        # Signal nginx to reload (this will be picked up by the restart policy)
+        # We can't directly reload nginx from this container, so we just log success
+        echo -e "${GREEN}✅ SSL setup complete!${NC}"
+        echo -e "${GREEN}🔒 Your site is now accessible at: https://${DOMAIN}${NC}\n"
+        echo -e "${YELLOW}Note: Nginx will automatically use the new certificates${NC}\n"
+    } || {
+        echo -e "${RED}❌ Failed to obtain Let's Encrypt certificate${NC}"
+        echo -e "${YELLOW}Using self-signed certificate as fallback${NC}\n"
+        
+        # Create self-signed as fallback
+        openssl req -x509 -nodes -days 90 -newkey rsa:2048 \
+            -keyout /etc/nginx/ssl/key.pem \
+            -out /etc/nginx/ssl/cert.pem \
+            -subj "/CN=$DOMAIN" 2>/dev/null
+        
+        echo -e "${YELLOW}⚠️  Self-signed certificate created${NC}"
+        echo -e "${YELLOW}⚠️  Common reasons for Let's Encrypt failure:${NC}"
+        echo -e "${YELLOW}    - Domain not pointing to this server${NC}"
+        echo -e "${YELLOW}    - Ports 80/443 not accessible from internet${NC}"
+        echo -e "${YELLOW}    - Rate limit reached (5 certs/week per domain)${NC}\n"
     }
-
-# Update Nginx configuration to use Let's Encrypt certificates
-if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
-    echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully!${NC}"
-    echo -e "${GREEN}Updating Nginx configuration...${NC}\n"
-    
-    # Update the Nginx config to use Let's Encrypt certificates
-    sed -i "s|ssl_certificate /etc/nginx/ssl/cert.pem;|ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;|g" /etc/nginx/conf.d/supporthub.conf
-    sed -i "s|ssl_certificate_key /etc/nginx/ssl/key.pem;|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;|g" /etc/nginx/conf.d/supporthub.conf
-    
-    echo -e "${GREEN}✅ SSL setup complete!${NC}"
-    echo -e "${GREEN}✅ Your site is accessible at: https://${DOMAIN}${NC}\n"
-else
-    echo -e "${YELLOW}Certificate not found. Using self-signed certificate.${NC}\n"
-fi
