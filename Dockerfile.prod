@@ -19,7 +19,7 @@ COPY . .
 RUN npx vite build
 
 # Build the server (backend) using production entry point (no vite imports)
-RUN npx esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --outfile=dist/index.js
+RUN npx esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js
 
 # Production stage
 FROM node:20-alpine AS production
