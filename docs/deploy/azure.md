@@ -257,7 +257,7 @@ nano .env
 ```bash
 NODE_ENV=production
 PORT=5000
-DATABASE_URL=postgresql://supporthub@supporthub-db-server:YourSecurePassword123!@supporthub-db-server.postgres.database.azure.com:5432/supporthub?sslmode=require
+DATABASE_URL=postgresql://supporthub@supporthub-db-server:YourSecurePassword123!@supporthub-db-server.postgres.database.azure.com/supporthub?sslmode=require
 SESSION_SECRET=your_very_long_random_session_secret_here
 TRUST_PROXY=1
 ```

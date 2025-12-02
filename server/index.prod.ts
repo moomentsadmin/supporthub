@@ -17,15 +17,20 @@ app.use(express.urlencoded({ extended: false }));
 // Session configuration
 const PgSession = connectPgSimple(session);
 
+// Validate session secret in production
+if (!process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET environment variable is required in production');
+}
+
 const sessionConfig: session.SessionOptions = {
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  secret: process.env.SESSION_SECRET,
   resave: true,
-  saveUninitialized: true,
+  saveUninitialized: false, // Don't save uninitialized sessions
   name: 'connect.sid',
   cookie: {
-    secure: false,
-    httpOnly: false,
-    maxAge: 8 * 60 * 60 * 1000,
+    secure: true, // HTTPS-only in production
+    httpOnly: true, // Prevent XSS attacks
+    maxAge: 8 * 60 * 60 * 1000, // 8 hours
     sameSite: 'lax',
     domain: undefined,
     path: '/'

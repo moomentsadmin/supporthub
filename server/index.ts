@@ -2,29 +2,79 @@ import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import helmet from "helmet";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { registerExtendedRoutes } from "./routes-extended";
 import { createAdminRoutes } from "./admin-routes";
 import { registerCustomerRoutes } from "./customer-routes";
 import { log } from "./logger";
 import { validateDatabaseConnection } from "./db";
+import { runSecurityChecks } from "./security-checks";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Trust proxy for rate limiting and proper IP detection behind nginx
+app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : 0);
+
+// Security Headers - Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // eval needed for Vite dev
+      connectSrc: ["'self'", "ws:", "wss:"], // WebSocket for dev
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// CORS Configuration
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:5000'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
+
+// Request Size Limits (prevent DoS)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Session configuration
 const PgSession = connectPgSimple(session);
 
+// Validate session secret in production
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET environment variable is required in production');
+}
+
 const sessionConfig: session.SessionOptions = {
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
   resave: true,
-  saveUninitialized: true,
+  saveUninitialized: false, // Don't save uninitialized sessions
   name: 'connect.sid',
   cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: false, // Allow JavaScript access for browser compatibility
-    maxAge: 8 * 60 * 60 * 1000, // 8 hours (reduced from 24)
+    secure: process.env.NODE_ENV === 'production', // HTTPS-only in production
+    httpOnly: true, // Prevent XSS attacks
+    maxAge: 8 * 60 * 60 * 1000, // 8 hours
     sameSite: 'lax',
     domain: undefined,
     path: '/'
@@ -85,7 +135,13 @@ app.use((req, res, next) => {
   next();
 });
 
+
 (async () => {
+  // Run security checks before starting server
+  await runSecurityChecks();
+
+  // Import rate limiters
+  const { rateLimiters } = await import('./rate-limiter');
 
 
   // Log database connection status
@@ -96,6 +152,19 @@ app.use((req, res, next) => {
     log("Warning: DATABASE_URL not found. Running with fallback storage.");
   }
 
+  
+  // Apply rate limiting to authentication endpoints
+  app.use('/api/admin/login', rateLimiters.auth);
+  app.use('/api/agent/login', rateLimiters.auth);
+  app.use('/api/customer/login', rateLimiters.auth);
+  app.use('/api/auth', rateLimiters.auth);
+  
+  // Apply rate limiting to ticket creation
+  app.use('/api/tickets', rateLimiters.ticketCreation);
+  
+  // General API rate limiting
+  app.use('/api/', rateLimiters.api);
+  
   const server = await registerRoutes(app);
   registerExtendedRoutes(app, server);
   
@@ -341,11 +410,16 @@ app.use((req, res, next) => {
   }, 5000);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    const status = err?.status || err?.statusCode || 500;
+    const message = status === 500 ? 'Internal server error' : (err?.message || 'Error');
+
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Error:', { status, message });
+    } else {
+      console.error('Error:', err);
+    }
 
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after
@@ -364,11 +438,15 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  const host = process.platform === 'win32' ? 'localhost' : '0.0.0.0';
+  const listenOptions: any = { port, host };
+  
+  // reusePort is not supported on Windows
+  if (process.platform !== 'win32') {
+    listenOptions.reusePort = true;
+  }
+  
+  server.listen(listenOptions, () => {
     log(`serving on port ${port}`);
   });
 })();

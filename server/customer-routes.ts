@@ -69,7 +69,19 @@ export function registerCustomerRoutes(app: Express) {
       if (!customer) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
-      
+
+      // Regenerate session to prevent fixation
+      await new Promise((resolve, reject) => {
+        req.session.regenerate((err) => {
+          if (err) {
+            console.error('Session regeneration error:', err);
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        });
+      });
+
       (req.session as any).customerId = customer.id;
       
       // Update last login

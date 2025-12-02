@@ -43,6 +43,18 @@ export function createAdminRoutes(storage: IStorage) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
+      // Regenerate session to prevent fixation
+      await new Promise((resolve, reject) => {
+        req.session.regenerate((err) => {
+          if (err) {
+            console.error('Session regeneration error:', err);
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        });
+      });
+
       // Store admin session
       (req.session as any).adminUser = {
         id: admin.id,

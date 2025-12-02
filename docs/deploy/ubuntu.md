@@ -68,7 +68,7 @@ nano .env
 ```bash
 NODE_ENV=production
 PORT=5000
-DATABASE_URL=postgresql://supporthub:your_secure_password_here@localhost:5432/supporthub
+DATABASE_URL=postgresql://supporthub:your_secure_password_here@localhost/supporthub
 SESSION_SECRET=your_very_long_random_session_secret_here
 TRUST_PROXY=1
 ```

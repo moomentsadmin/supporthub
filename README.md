@@ -336,7 +336,18 @@ TWILIO_PHONE_NUMBER=+1234567890
 
 ## 📚 Documentation
 
-### Deployment Guides
+### 🚀 Quick Start Guides
+- [Production Deployment Guide](PRODUCTION-DEPLOYMENT.md) - HTTPS/SSL setup
+- [Docker Deployment Guide](DOCKER-DEPLOYMENT.md) - Containerized deployment
+- [Let's Encrypt SSL Guide](LETS-ENCRYPT-DEPLOYMENT.md) - Free SSL certificates
+
+### 🔒 Security & Operations
+- [Security Best Practices](SECURITY.md) - Comprehensive security guide
+- [Production Checklist](PRODUCTION-CHECKLIST.md) - Pre-deployment checklist
+- [Operations Guide](OPERATIONS-GUIDE.md) - Day-to-day operations reference
+- [Production Readiness Report](PRODUCTION-READINESS-REPORT.md) - Assessment report
+
+### ☁️ Platform-Specific Deployment
 - [Ubuntu Server Deployment](docs/deploy/ubuntu.md)
 - [Digital Ocean Deployment](docs/deploy/digitalocean.md)
 - [AWS Deployment](docs/deploy/aws.md)

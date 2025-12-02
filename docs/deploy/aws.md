@@ -199,7 +199,7 @@ nano .env
 ```bash
 NODE_ENV=production
 PORT=5000
-DATABASE_URL=postgresql://supporthub:YourSecurePassword123@supporthub-db.region.rds.amazonaws.com:5432/postgres?sslmode=require
+DATABASE_URL=postgresql://supporthub:YourSecurePassword123@supporthub-db.region.rds.amazonaws.com/postgres?sslmode=require
 SESSION_SECRET=your_very_long_random_session_secret_here
 TRUST_PROXY=1
 VERIFIED_SENDER_EMAIL=noreply@yourdomain.com
@@ -208,7 +208,7 @@ SENDGRID_API_KEY=your_sendgrid_api_key
 
 **Test database connection:**
 ```bash
-psql "postgresql://supporthub:YourSecurePassword123@supporthub-db.region.rds.amazonaws.com:5432/postgres?sslmode=require" -c "SELECT version();"
+psql "postgresql://supporthub:YourSecurePassword123@supporthub-db.region.rds.amazonaws.com/postgres?sslmode=require" -c "SELECT version();"
 ```
 
 **Build and start application:**

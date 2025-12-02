@@ -36,68 +36,73 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
       <div className="flex h-screen relative z-10">
         {/* Sidebar */}
-        <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col">
-          <div className="p-6 border-b border-gray-200">
+        <div className="w-72 bg-white/95 backdrop-blur-md border-r border-gray-200/80 flex flex-col shadow-xl">
+          <div className="p-6 border-b border-gray-200/60">
             <div className="flex items-center space-x-3">
               {whitelabelConfig?.logoUrl ? (
                 <img
                   src={whitelabelConfig.logoUrl}
                   alt={whitelabelConfig.companyName || "Logo"}
-                  className="h-8 w-auto object-contain"
+                  className="h-10 w-auto object-contain"
                 />
               ) : (
-                <Shield 
-                  className="w-8 h-8" 
-                  style={{ color: whitelabelConfig?.primaryColor || '#3b82f6' }}
-                />
+                <div 
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg hover-scale transition-all duration-200"
+                  style={{ 
+                    backgroundColor: whitelabelConfig?.primaryColor || '#3b82f6',
+                    boxShadow: `0 8px 20px ${whitelabelConfig?.primaryColor || '#3b82f6'}33`
+                  }}
+                >
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
               )}
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Admin Portal</h1>
-                <p className="text-xs text-gray-600">System Management</p>
+                <h1 className="text-xl font-bold text-gray-900 tracking-tight">Admin Portal</h1>
+                <p className="text-xs text-gray-500 font-medium mt-0.5">System Management</p>
               </div>
             </div>
           </div>
 
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            <Link href="/admin/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+          <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+            <Link href="/admin/dashboard" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
               isActive('/admin/dashboard') || location === '/admin' 
-                ? 'text-gray-900 bg-blue-100' 
-                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30' 
+                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/80 hover-scale'
             }`}>
               <BarChart3 className="h-5 w-5" />
               Dashboard
             </Link>
-            <Link href="/admin/analytics" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            <Link href="/admin/analytics" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
               isActive('/admin/analytics') 
-                ? 'text-gray-900 bg-blue-100' 
-                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30' 
+                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/80 hover-scale'
             }`}>
               <TrendingUp className="h-5 w-5" />
               Analytics
             </Link>
-            <Link href="/admin/agents" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            <Link href="/admin/agents" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
               isActive('/admin/agents') 
-                ? 'text-gray-900 bg-blue-100' 
-                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30' 
+                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/80 hover-scale'
             }`}>
               <Users className="h-5 w-5" />
               Agents
             </Link>
-            <Link href="/admin/admin-users" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            <Link href="/admin/admin-users" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
               isActive('/admin/admin-users') 
-                ? 'text-gray-900 bg-blue-100' 
-                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30' 
+                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/80 hover-scale'
             }`}>
               <Shield className="h-5 w-5" />
               Admin Users
             </Link>
-            <Link href="/admin/channels" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            <Link href="/admin/channels" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
               isActive('/admin/channels') 
-                ? 'text-gray-900 bg-blue-100' 
-                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30' 
+                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100/80 hover-scale'
             }`}>
               <MessageSquare className="h-5 w-5" />
               Channels

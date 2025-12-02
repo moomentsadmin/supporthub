@@ -4,6 +4,7 @@ import express from "express";
 import session from "express-session";
 import { storage } from "./storage";
 import multer from "multer";
+import crypto from "crypto";
 import path from "path";
 import { z } from "zod";
 import { 
@@ -19,12 +20,36 @@ import {
   ObjectNotFoundError,
 } from "./objectStorage";
 
-// Configure multer for file uploads
+// Configure multer for file uploads with allowlist
+const allowedMimeTypes = [
+  'image/png', 'image/jpeg', 'image/gif',
+  'application/pdf',
+  'text/plain'
+];
+const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt'];
+
 const upload = multer({
-  dest: 'uploads/',
+  storage: multer.diskStorage({
+    destination: 'uploads/',
+    filename: (_req, file, cb) => {
+      const safeExt = path.extname(file.originalname).toLowerCase();
+      const base = crypto.randomBytes(12).toString('hex');
+      cb(null, `${base}${safeExt}`);
+    }
+  }),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 5
   },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const typeOk = allowedMimeTypes.includes(file.mimetype);
+    const extOk = allowedExtensions.includes(ext);
+    if (!typeOk || !extOk) {
+      return cb(new Error('Unsupported file type'));
+    }
+    cb(null, true);
+  }
 });
 
 // Session types
@@ -403,7 +428,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!agent) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
-      
+
+      // Regenerate session to prevent fixation
+      await new Promise<void>((resolve, reject) => {
+        req.session.regenerate((err: any) => {
+          if (err) {
+            console.error('Session regeneration error:', err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+
       req.session.agentId = agent.id;
       await new Promise<void>((resolve, reject) => {
         req.session.save((err: any) => {
@@ -899,6 +936,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "attachmentURL and filename are required" });
       }
 
+      // Validate MIME type and extension
+      const ext = path.extname(filename).toLowerCase();
+      if (!allowedExtensions.includes(ext) || (mimeType && !allowedMimeTypes.includes(mimeType))) {
+        return res.status(400).json({ error: "Unsupported file type" });
+      }
+
       const objectStorageService = new ObjectStorageService();
       const objectPath = objectStorageService.normalizeObjectEntityPath(attachmentURL);
 
@@ -953,6 +996,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file provided" });
+      }
+
+      // Validate MIME type and extension against allowlist
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      if (!allowedExtensions.includes(ext) || !allowedMimeTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ message: "Unsupported file type" });
+      }
+
+      // Reject files with suspicious names
+      const original = req.file.originalname.toLowerCase();
+      if (original.includes('..') || original.includes('/') || original.includes('\\')) {
+        return res.status(400).json({ message: "Invalid filename" });
       }
 
       const attachment = await storage.createAttachment({
