@@ -57,12 +57,13 @@ services:
     volumes:
       - ./configs/nginx-compose-http.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:80/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "nc -z localhost 80 || exit 1"]
+      interval: 15s
+      timeout: 5s
       retries: 3
       start_period: 10s
 

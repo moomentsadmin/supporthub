@@ -118,6 +118,76 @@ Set up Nginx or Caddy on the host machine to handle SSL and proxy to port 80.
 
 ## Troubleshooting
 
+### Debug Nginx Unhealthy Status
+
+Run these commands on your server to diagnose the issue:
+
+```bash
+# 1. Check nginx logs
+docker compose -f ~/supporthub/compose.internal-db.yml logs --tail=100 nginx
+
+# 2. Test nginx configuration syntax
+docker compose -f ~/supporthub/compose.internal-db.yml exec nginx nginx -t
+
+# 3. Check if nginx can reach the app
+docker compose -f ~/supporthub/compose.internal-db.yml exec nginx wget -O- http://app:5000/api/health
+
+# 4. Test healthcheck manually
+docker compose -f ~/supporthub/compose.internal-db.yml exec nginx wget --quiet --tries=1 --spider http://localhost:80/api/health && echo "SUCCESS" || echo "FAILED"
+
+# 5. Check if port 80 is listening inside nginx container
+docker compose -f ~/supporthub/compose.internal-db.yml exec nginx netstat -tlnp | grep :80
+
+# 6. Alternative: Use curl instead of wget (if wget is the issue)
+docker compose -f ~/supporthub/compose.internal-db.yml exec nginx sh -c "command -v wget || command -v curl"
+```
+
+### Common Issues and Fixes
+
+#### Issue 1: wget not installed in nginx:alpine
+**Solution:** Change healthcheck to use curl or just check if nginx is running
+
+Update `compose.internal-db.yml` nginx healthcheck to:
+```yaml
+healthcheck:
+  test: ["CMD-SHELL", "nc -z localhost 80 || exit 1"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
+```
+
+#### Issue 2: App not ready when nginx starts
+**Solution:** Add dependency with healthcheck condition
+
+Already configured:
+```yaml
+depends_on:
+  - app  # This should be: app: { condition: service_healthy }
+```
+
+#### Issue 3: Network connectivity between containers
+**Solution:** Test container-to-container communication
+```bash
+docker compose -f ~/supporthub/compose.internal-db.yml exec nginx ping -c 3 app
+```
+
+### Quick Fix: Disable Nginx Healthcheck Temporarily
+
+If you need to get running immediately, disable the healthcheck:
+
+```bash
+# Edit compose.internal-db.yml and comment out nginx healthcheck:
+# healthcheck:
+#   test: ["CMD-SHELL", "nc -z localhost 80 || exit 1"]
+```
+
+Then restart:
+```bash
+docker compose -f ~/supporthub/compose.internal-db.yml down
+docker compose -f ~/supporthub/compose.internal-db.yml up -d
+```
+
 ### If nginx still fails:
 ```bash
 # Check nginx config is correct
