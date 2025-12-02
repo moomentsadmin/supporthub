@@ -49,20 +49,18 @@ services:
       timeout: 5s
       retries: 5
 
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy (HTTP only - for production with SSL, use compose.production.yml)
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - ./configs/nginx-compose.conf:/etc/nginx/nginx.conf:ro
-      - ssl_certs:/etc/nginx/ssl:ro
+      - ./configs/nginx-compose-http.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/health", "||", "exit", "1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,8 +71,6 @@ volumes:
   app_uploads:
     driver: local
   app_logs:
-    driver: local
-  ssl_certs:
     driver: local
 
 networks:

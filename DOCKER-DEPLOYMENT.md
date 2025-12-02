@@ -370,15 +370,18 @@ docker compose -f compose.internal-db.yml logs app
 
 **Error:** `ECONNREFUSED 172.18.0.2:443`
 
-**Solution:** Wrong DATABASE_URL format. For local Docker database use:
+**Solution:** Wrong DATABASE_URL format. The `@neondatabase/serverless` driver is trying to use HTTP/HTTPS protocol instead of PostgreSQL protocol.
+
+For Docker PostgreSQL, use standard PostgreSQL format (NOT Neon HTTP format):
 ```env
+# CORRECT for Docker internal database:
 DATABASE_URL=postgresql://supporthub:password@db:5432/supporthub
+
+# WRONG - This is Neon HTTP format (causes port 443 errors):
+DATABASE_URL=https://...
 ```
 
-NOT Neon HTTP format:
-```env
-DATABASE_URL=https://... (WRONG for Docker)
-```
+**Important:** The `compose.internal-db.yml` sets this automatically. Only change if using external database.
 
 **Error:** `password authentication failed`
 
