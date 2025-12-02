@@ -28,7 +28,7 @@ const sessionConfig: session.SessionOptions = {
   saveUninitialized: false, // Don't save uninitialized sessions
   name: 'connect.sid',
   cookie: {
-    secure: true, // HTTPS-only in production
+    secure: false, // HTTP for now, use true when HTTPS is configured
     httpOnly: true, // Prevent XSS attacks
     maxAge: 8 * 60 * 60 * 1000, // 8 hours
     sameSite: 'lax',

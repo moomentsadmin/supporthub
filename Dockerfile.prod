@@ -44,13 +44,15 @@ RUN npm ci --only=production && \
 
 # Copy built application from builder stage
 COPY --from=builder --chown=supporthub:nodejs /app/dist ./dist
+
+# Copy shared schema
 COPY --from=builder --chown=supporthub:nodejs /app/shared ./shared
 
 # Copy only necessary server files (not vite.ts which requires vite package)
 COPY --from=builder --chown=supporthub:nodejs /app/server/static.ts ./server/
 COPY --from=builder --chown=supporthub:nodejs /app/server/logger.ts ./server/
 
-# Copy other necessary files from builder stage
+# Copy drizzle config
 COPY --from=builder --chown=supporthub:nodejs /app/drizzle.config.ts ./
 
 # Create necessary directories
