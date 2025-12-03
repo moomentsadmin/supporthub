@@ -92,9 +92,8 @@ git pull origin main
 
 echo ""
 echo "🔧 Updating nginx configuration with domain..."
-# Replace DOMAIN placeholder in nginx config
-sed -i "s|ssl_certificate /etc/letsencrypt/live/DOMAIN/|ssl_certificate /etc/letsencrypt/live/$DOMAIN/|g" configs/nginx-compose.conf
-sed -i "s|ssl_certificate_key /etc/letsencrypt/live/DOMAIN/|ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/|g" configs/nginx-compose.conf
+# Replace domain placeholder in SSL nginx config
+sed "s|__DOMAIN__|$DOMAIN|g" configs/nginx-compose.conf > configs/nginx-ssl.conf
 
 echo ""
 echo "🛑 Stopping any existing containers..."
@@ -147,6 +146,18 @@ docker compose -f $COMPOSE_FILE run --rm certbot certonly \
 
 if [ $? -eq 0 ]; then
     echo "✅ SSL certificate obtained successfully!"
+    
+    echo ""
+    echo "🔄 Updating nginx to use SSL configuration..."
+    # Stop nginx
+    docker compose -f $COMPOSE_FILE stop nginx
+    
+    # Update compose file to use SSL config
+    sed -i 's|nginx-initial.conf|nginx-ssl.conf|g' $COMPOSE_FILE
+    
+    # Start nginx with SSL
+    docker compose -f $COMPOSE_FILE up -d nginx
+    
 else
     echo "❌ Failed to obtain SSL certificate"
     echo ""
@@ -160,12 +171,8 @@ else
 fi
 
 echo ""
-echo "🔄 Restarting nginx with SSL..."
-docker compose -f $COMPOSE_FILE restart nginx
-
-echo ""
-echo "⏳ Waiting for services to be ready..."
-sleep 15
+echo "⏳ Waiting for HTTPS to be ready..."
+sleep 10
 
 echo ""
 echo "📊 Checking service status..."
