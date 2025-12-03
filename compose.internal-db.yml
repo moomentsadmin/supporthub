@@ -49,17 +49,22 @@ services:
       timeout: 5s
       retries: 5
 
-  # Nginx Reverse Proxy (HTTP only - for production with SSL, use compose.production.yml)
+  # Nginx Reverse Proxy with HTTPS (Let's Encrypt)
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./configs/nginx-compose-http.conf:/etc/nginx/nginx.conf:ro
+      - ./configs/nginx-compose.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
     depends_on:
       app:
         condition: service_started
     restart: unless-stopped
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
@@ -67,12 +72,25 @@ services:
       retries: 3
       start_period: 10s
 
+  # Certbot for Let's Encrypt SSL certificates
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
   app_uploads:
     driver: local
   app_logs:
+    driver: local
+  certbot_conf:
+    driver: local
+  certbot_www:
     driver: local
 
 networks:
