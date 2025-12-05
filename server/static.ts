@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
-  // In production build, the dist path contains the bundled client
-  const distPath = path.resolve(import.meta.dirname, "../dist");
+  // In production build, the Vite outDir is dist/public
+  const distPath = path.resolve(import.meta.dirname, "../dist/public");
 
   if (!fs.existsSync(distPath)) {
     console.warn(`Build directory not found at ${distPath}, trying alternative path...`);
