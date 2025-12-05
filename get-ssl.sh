@@ -90,7 +90,6 @@ docker compose -f compose.internal-db.yml run --rm certbot certonly \
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
-    --force-renewal \
     -d $DOMAIN
 
 if [ $? -ne 0 ]; then
