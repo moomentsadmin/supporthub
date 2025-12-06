@@ -108,27 +108,6 @@ app.use((req, res, next) => {
   app.use('/api/agent', agentRoutes);
   
   registerCustomerRoutes(app);
-  
-  app.get('/admin-login-working.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../admin-login-working.html'));
-  });
-
-  app.get('/agent-login-working.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../agent-login-working.html'));
-  });
-
-  app.get('/agent-dashboard-working.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../agent-dashboard-working.html'));
-  });
-  
-  app.get('/test-logs', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/public/test-logs.html'));
-  });
-
-  app.get('/admin-logs-working.html', (req, res) => {
-    const html = `<!DOCTYPE html><html><head><title>Admin System Logs</title></head><body><h1>Admin Logs</h1><p>Production mode - logs endpoint available at /api/admin/logs</p></body></html>`;
-    res.send(html);
-  });
 
   const { getEmailPoller } = await import('./email-poller');
   setTimeout(async () => {
