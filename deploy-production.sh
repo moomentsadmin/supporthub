@@ -8,6 +8,7 @@ set -e
 DOMAIN=""
 EMAIL=""
 USE_SSL=false
+NGINX_CONF=./configs/nginx.conf
 
 # Colors for output
 RED='\033[0;31m'
@@ -111,6 +112,9 @@ echo ""
 # Step 5: Start services
 echo "Step 5/6: Start Services"
 echo "------------------------"
+# Ensure nginx.conf starts in HTTP-only mode before first cert
+cp configs/nginx-initial.conf "$NGINX_CONF"
+
 docker compose -f compose.internal-db.yml up -d app db
 echo "Waiting for database to be ready..."
 sleep 15
@@ -142,69 +146,35 @@ if [ "$USE_SSL" = true ]; then
     echo "Step 6/6: SSL Certificate Setup"
     echo "-------------------------------"
     
-    # Stop nginx temporarily
+    # Stop nginx to free port 80
     docker compose -f compose.internal-db.yml stop nginx
-    
-    # Start temporary nginx for ACME challenge
-    docker run -d --name nginx-temp \
-        --network supporthub_default \
+
+    # Request certificate using standalone mode on port 80
+    echo "Requesting SSL certificate (standalone on :80)..."
+    docker run --rm --name supporthub-certbot \
         -p 80:80 \
-        -v ~/supporthub/nginx-acme.conf:/etc/nginx/nginx.conf:ro \
-        -v supporthub_certbot_www:/var/www/certbot \
         -v supporthub_certbot_conf:/etc/letsencrypt \
-        nginx:alpine > /dev/null 2>&1
-    
-    # Create simple ACME config
-    cat > ~/supporthub/nginx-acme.conf << 'EOF'
-events { worker_connections 1024; }
-http {
-    server {
-        listen 80;
-        location /.well-known/acme-challenge/ {
-            root /var/www/certbot;
-        }
-        location / {
-            return 200 'Preparing SSL...';
-            add_header Content-Type text/plain;
-        }
-    }
-}
-EOF
-    
-    docker restart nginx-temp
-    sleep 3
-    
-    # Get certificate
-    echo "Requesting SSL certificate..."
-    docker compose -f compose.internal-db.yml run --rm certbot certonly \
-        --webroot \
-        --webroot-path=/var/www/certbot \
-        --email $EMAIL \
+        -v supporthub_certbot_www:/var/www/certbot \
+        certbot/certbot certonly \
+        --standalone \
+        --preferred-challenges http \
+        --email "$EMAIL" \
         --agree-tos \
         --no-eff-email \
-        -d $DOMAIN
-    
+        -d "$DOMAIN"
+
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓${NC} SSL certificate obtained"
-        
-        # Create SSL nginx config
-        sed "s|__DOMAIN__|$DOMAIN|g" configs/nginx-compose.conf > configs/nginx-ssl.conf
-        sed -i 's|nginx-initial.conf|nginx-ssl.conf|g' compose.internal-db.yml
-        
-        # Cleanup and restart with SSL
-        docker stop nginx-temp
-        docker rm nginx-temp
-        rm ~/supporthub/nginx-acme.conf
-        
+        # Switch nginx to HTTPS config
+        sed "s|__DOMAIN__|$DOMAIN|g" configs/nginx-compose.conf > "$NGINX_CONF"
         docker compose -f compose.internal-db.yml up -d nginx
         sleep 5
-        
         echo -e "${GREEN}✓${NC} HTTPS enabled"
     else
         echo -e "${RED}✗${NC} SSL certificate request failed"
         echo "Continuing with HTTP only"
-        docker stop nginx-temp 2>/dev/null || true
-        docker rm nginx-temp 2>/dev/null || true
+        # Restore HTTP config and restart nginx
+        cp configs/nginx-initial.conf "$NGINX_CONF"
         docker compose -f compose.internal-db.yml up -d nginx
     fi
 else
