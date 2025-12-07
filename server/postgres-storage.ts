@@ -785,6 +785,10 @@ export class PostgresStorage implements IStorage {
   }
 
   async getAdminUserByEmail(email: string): Promise<AdminUser | undefined> {
+    if (!this.db) {
+      console.warn('Database not initialized. Cannot fetch admin user.');
+      return undefined;
+    }
     await this.initialize();
     const result = await this.db.select().from(adminUsers).where(eq(adminUsers.email, email));
     return result[0];

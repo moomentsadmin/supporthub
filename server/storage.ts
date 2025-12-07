@@ -1531,8 +1531,21 @@ import { PostgresStorage } from './postgres-storage';
 // Initialize storage with fallback handling
 function createStorage(): IStorage {
   if (process.env.DATABASE_URL) {
-    console.log('Using PostgreSQL storage');
-    return new PostgresStorage();
+    try {
+      console.log('Attempting to use PostgreSQL storage');
+      const pgStorage = new PostgresStorage();
+      // Check if db initialized successfully
+      if ((pgStorage as any).db) {
+        console.log('✓ PostgreSQL storage initialized successfully');
+        return pgStorage;
+      } else {
+        throw new Error('Database connection failed');
+      }
+    } catch (error) {
+      console.warn('PostgreSQL storage failed to initialize:', error instanceof Error ? error.message : String(error));
+      console.log('Falling back to in-memory storage');
+      return new MemStorage();
+    }
   } else {
     console.log('DATABASE_URL not found. Using in-memory storage for development/testing');
     return new MemStorage();
