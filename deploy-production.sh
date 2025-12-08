@@ -78,8 +78,9 @@ echo ""
 echo "Step 3/6: Environment Setup"
 echo "---------------------------"
 if [ ! -f .env ]; then
-    SESSION_SECRET=$(openssl rand -base64 32)
-    DB_PASSWORD=$(openssl rand -base64 24)
+    # Generate URL-safe passwords (alphanumeric only)
+    SESSION_SECRET=$(openssl rand -hex 32)
+    DB_PASSWORD=$(openssl rand -hex 16)
     
     cat > .env << EOF
 # Generated $(date)
@@ -88,6 +89,7 @@ PORT=5000
 SESSION_SECRET=$SESSION_SECRET
 DB_PASSWORD=$DB_PASSWORD
 DOMAIN=$DOMAIN
+DATABASE_URL=postgresql://supporthub:$DB_PASSWORD@db:5432/supporthub
 EOF
     echo -e "${GREEN}✓${NC} Environment file created"
 else
