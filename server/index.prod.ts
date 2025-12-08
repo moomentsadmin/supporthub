@@ -39,13 +39,17 @@ const sessionConfig: session.SessionOptions = {
 
 if (process.env.DATABASE_URL) {
   try {
+    // Validate DATABASE_URL before using it
+    new URL(process.env.DATABASE_URL.replace('postgresql://', 'http://'));
     sessionConfig.store = new PgSession({
       conString: process.env.DATABASE_URL,
       createTableIfMissing: true,
       tableName: 'sessions'
     });
+    console.log('✓ Using PostgreSQL session store');
   } catch (error) {
-    console.log('Database session store failed, using memory store');
+    console.error('Database session store failed:', error instanceof Error ? error.message : String(error));
+    console.log('⚠ Falling back to memory session store');
   }
 } else {
   console.log('No DATABASE_URL, using memory session store');

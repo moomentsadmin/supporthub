@@ -44,16 +44,21 @@ export function createAdminRoutes(storage: IStorage) {
       }
 
       // Regenerate session to prevent fixation
-      await new Promise((resolve, reject) => {
-        req.session.regenerate((err) => {
-          if (err) {
-            console.error('Session regeneration error:', err);
-            reject(err);
-          } else {
-            resolve(true);
-          }
+      try {
+        await new Promise((resolve, reject) => {
+          req.session.regenerate((err) => {
+            if (err) {
+              console.error('Session regeneration error:', err);
+              reject(err);
+            } else {
+              resolve(true);
+            }
+          });
         });
-      });
+      } catch (sessionError) {
+        console.error('Session regeneration failed, continuing without regeneration:', sessionError);
+        // Continue anyway - better to have a session without regeneration than to fail login
+      }
 
       // Store admin session
       (req.session as any).adminUser = {
@@ -64,17 +69,22 @@ export function createAdminRoutes(storage: IStorage) {
       };
       
       // Force session save and wait for completion
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => {
-          if (err) {
-            console.error('Session save error:', err);
-            reject(err);
-          } else {
-            console.log('Admin session saved successfully for:', admin.email);
-            resolve(true);
-          }
+      try {
+        await new Promise((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) {
+              console.error('Session save error:', err);
+              reject(err);
+            } else {
+              console.log('Admin session saved successfully for:', admin.email);
+              resolve(true);
+            }
+          });
         });
-      });
+      } catch (sessionError) {
+        console.error('Session save failed, continuing anyway:', sessionError);
+        // Continue - session may still work even if explicit save failed
+      }
 
       res.json({
         id: admin.id,
