@@ -109,26 +109,3 @@ export function Header() {
     </header>
   );
 }
-              </div>
-            )}
-            <div className="hidden md:block">
-              <p className="text-sm font-semibold text-gray-900">{agent?.name}</p>
-              <p className="text-xs text-gray-500 font-medium capitalize">{agent?.role?.replace('_', ' ')}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => logout.mutate()}
-              className="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 h-9 w-9"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-export default Header;
