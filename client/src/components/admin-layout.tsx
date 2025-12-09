@@ -13,7 +13,8 @@ import {
   Upload,
   Monitor,
   LogOut,
-  BookOpen
+  BookOpen,
+  Palette
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -114,6 +115,14 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             }`}>
               <BookOpen className="h-5 w-5" />
               Knowledge Base
+            </Link>
+            <Link href="/admin/branding" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              isActive('/admin/branding') 
+                ? 'text-gray-900 bg-blue-100' 
+                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+            }`}>
+              <Palette className="h-5 w-5" />
+              Branding
             </Link>
             <Link href="/admin/settings" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
               isActive('/admin/settings') 

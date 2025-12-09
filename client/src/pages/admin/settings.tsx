@@ -96,16 +96,6 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
-      {/* Branding / Whitelabel */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Branding & Whitelabel</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WhitelabelConfigForm config={whitelabelConfig || undefined} />
-        </CardContent>
-      </Card>
-
       {/* Email Provider Configuration Section */}
       <Card className="mb-6">
         <EmailProviderSettings />

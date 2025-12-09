@@ -61,10 +61,13 @@ export default function WhitelabelConfigForm({ config }: WhitelabelConfigProps) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/whitelabel"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/whitelabel"] });
       toast({
         title: "Success",
-        description: "Whitelabel configuration created successfully",
+        description: "Whitelabel configuration created successfully. Refresh the page to see changes.",
       });
+      // Force reload whitelabel config in context
+      window.location.reload();
     },
     onError: (error: Error) => {
       toast({
@@ -82,10 +85,13 @@ export default function WhitelabelConfigForm({ config }: WhitelabelConfigProps) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/whitelabel"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/whitelabel"] });
       toast({
         title: "Success",
-        description: "Whitelabel configuration updated successfully",
+        description: "Whitelabel configuration updated successfully. Refresh the page to see changes.",
       });
+      // Force reload whitelabel config in context
+      window.location.reload();
     },
     onError: (error: Error) => {
       toast({

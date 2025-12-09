@@ -15,6 +15,7 @@ import AgentNew from "@/pages/admin/agent-new";
 import AgentEdit from "@/pages/admin/agent-edit";
 import AdminSettings from "@/pages/admin/settings";
 import AdminChannels from "@/pages/admin/channels";
+import AdminBranding from "@/pages/admin/branding";
 import AdminLogs from "@/pages/admin/logs";
 import AdminAnalytics from "@/pages/admin/analytics";
 import AdminUsers from "@/pages/admin/admin-users";
@@ -103,6 +104,7 @@ function Router() {
         <Route path="/admin/agents/new" component={AgentNew} />
         <Route path="/admin/agents/:id/edit" component={AgentEdit} />
         <Route path="/admin/settings" component={AdminSettings} />
+        <Route path="/admin/branding" component={AdminBranding} />
         <Route path="/admin/channels" component={AdminChannels} />
         <Route path="/admin/logs" component={AdminLogs} />
         <Route path="/admin/freshdesk-import" component={FreshdeskImport} />
