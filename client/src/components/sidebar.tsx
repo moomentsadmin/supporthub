@@ -215,25 +215,7 @@ export function Sidebar() {
   );
 }
 
-        {/* Channel configuration moved to admin area */}
-
-        {/* Management Section */}
-        <div className="pt-4 border-t border-gray-200">
-          <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-            Management
-          </h3>
-          <div className="space-y-1">
-            {managementItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <a className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </a>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </nav>
+export default Sidebar;
     </aside>
   );
 }
