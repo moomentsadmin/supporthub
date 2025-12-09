@@ -10,7 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Search, Filter, MessageCircle, Phone } from "lucide-react";
 import { EmailProviderSettings } from "@/components/email-provider-settings";
 import AdminLayout from "@/components/admin-layout";
+import WhitelabelConfigForm from "@/components/whitelabel-config";
 import { useToast } from "@/hooks/use-toast";
+import type { WhitelabelConfig } from "@shared/schema";
 
 export default function AdminSettings() {
   const { toast } = useToast();
@@ -20,6 +22,10 @@ export default function AdminSettings() {
 
   const { data: settings = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/settings"]
+  });
+
+  const { data: whitelabelConfig } = useQuery<WhitelabelConfig | null>({
+    queryKey: ["/api/admin/whitelabel"]
   });
 
   // Get feature settings specifically
@@ -90,6 +96,16 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
+      {/* Branding / Whitelabel */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Branding & Whitelabel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WhitelabelConfigForm config={whitelabelConfig || undefined} />
+        </CardContent>
+      </Card>
+
       {/* Email Provider Configuration Section */}
       <Card className="mb-6">
         <EmailProviderSettings />
@@ -104,14 +120,14 @@ export default function AdminSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 ${
+          <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 shadow-sm ${
             isChatEnabled 
-              ? 'border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20' 
-              : 'border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700/50'
+              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20' 
+              : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
           }`}>
             <div className="flex items-center space-x-3">
               <MessageCircle className={`w-5 h-5 transition-colors duration-200 ${
-                isChatEnabled ? 'text-blue-600' : 'text-gray-400'
+                isChatEnabled ? 'text-emerald-600' : 'text-gray-400'
               }`} />
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white">Live Chat Widget</h4>
@@ -120,25 +136,31 @@ export default function AdminSettings() {
                 </p>
               </div>
             </div>
-            <Switch
-              checked={isChatEnabled}
-              onCheckedChange={(checked) => {
-                toast({
-                  title: `Chat ${checked ? 'enabled' : 'disabled'}`,
-                  description: `Live chat widget has been ${checked ? 'enabled' : 'disabled'}`,
-                });
-              }}
-            />
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-semibold uppercase tracking-wide ${isChatEnabled ? 'text-emerald-700' : 'text-gray-500'}`}>
+                {isChatEnabled ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className="h-8 w-16 data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-gray-200"
+                checked={isChatEnabled}
+                onCheckedChange={(checked) => {
+                  toast({
+                    title: `Chat ${checked ? 'enabled' : 'disabled'}`,
+                    description: `Live chat widget has been ${checked ? 'enabled' : 'disabled'}`,
+                  });
+                }}
+              />
+            </div>
           </div>
 
-          <div className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 ${
+          <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 shadow-sm ${
             isPhoneNumberEnabled 
-              ? 'border-green-200 bg-green-50 dark:border-green-700 dark:bg-green-900/20' 
-              : 'border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700/50'
+              ? 'border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20' 
+              : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
           }`}>
             <div className="flex items-center space-x-3">
               <Phone className={`w-5 h-5 transition-colors duration-200 ${
-                isPhoneNumberEnabled ? 'text-green-600' : 'text-gray-400'
+                isPhoneNumberEnabled ? 'text-blue-600' : 'text-gray-400'
               }`} />
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white">Phone Number Collection</h4>
@@ -147,15 +169,21 @@ export default function AdminSettings() {
                 </p>
               </div>
             </div>
-            <Switch
-              checked={isPhoneNumberEnabled}
-              onCheckedChange={(checked) => {
-                toast({
-                  title: `Phone collection ${checked ? 'enabled' : 'disabled'}`,
-                  description: `Phone number collection has been ${checked ? 'enabled' : 'disabled'}`,
-                });
-              }}
-            />
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-semibold uppercase tracking-wide ${isPhoneNumberEnabled ? 'text-blue-700' : 'text-gray-500'}`}>
+                {isPhoneNumberEnabled ? 'On' : 'Off'}
+              </span>
+              <Switch
+                className="h-8 w-16 data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-200"
+                checked={isPhoneNumberEnabled}
+                onCheckedChange={(checked) => {
+                  toast({
+                    title: `Phone collection ${checked ? 'enabled' : 'disabled'}`,
+                    description: `Phone number collection has been ${checked ? 'enabled' : 'disabled'}`,
+                  });
+                }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
