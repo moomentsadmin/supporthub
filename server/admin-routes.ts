@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
-import { insertAgentSchema, insertChannelConfigSchema, insertApplicationSettingsSchema } from '@shared/schema';
+import { insertAgentSchema, insertChannelConfigSchema, insertApplicationSettingsSchema, insertWhitelabelConfigSchema } from '@shared/schema';
 import nodemailer from 'nodemailer';
 import type { IStorage } from './storage';
 
@@ -459,6 +459,58 @@ export function createAdminRoutes(storage: IStorage) {
     } catch (error) {
       console.error('Delete setting error:', error);
       res.status(500).json({ message: 'Failed to delete setting' });
+    }
+  });
+
+  // Whitelabel configuration routes
+  router.get('/whitelabel', requireAdminAuth, async (_req, res) => {
+    try {
+      const config = await storage.getWhitelabelConfig();
+      res.json(config || null);
+    } catch (error) {
+      console.error('Get whitelabel config error:', error);
+      res.status(500).json({ message: 'Failed to fetch whitelabel configuration' });
+    }
+  });
+
+  router.post('/whitelabel', requireAdminAuth, async (req, res) => {
+    try {
+      const data = insertWhitelabelConfigSchema.parse(req.body);
+
+      // If a config already exists, treat POST as an update for convenience
+      const existing = await storage.getWhitelabelConfig();
+      if (existing) {
+        const updated = await storage.updateWhitelabelConfig(existing.id, data);
+        return res.json(updated);
+      }
+
+      const created = await storage.createWhitelabelConfig(data);
+      res.status(201).json(created);
+    } catch (error) {
+      console.error('Create whitelabel config error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid whitelabel data', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Failed to create whitelabel configuration' });
+    }
+  });
+
+  router.patch('/whitelabel/:id', requireAdminAuth, async (req, res) => {
+    try {
+      const updates = insertWhitelabelConfigSchema.partial().parse(req.body);
+      const updated = await storage.updateWhitelabelConfig(req.params.id, updates);
+
+      if (!updated) {
+        return res.status(404).json({ message: 'Whitelabel configuration not found' });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error('Update whitelabel config error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid whitelabel data', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Failed to update whitelabel configuration' });
     }
   });
 
