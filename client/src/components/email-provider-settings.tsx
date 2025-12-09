@@ -333,21 +333,21 @@ export function EmailProviderSettings({ className }: EmailProviderSettingsProps)
           onValueChange={(val) => setSelectedProvider(val as keyof ProviderConfig)}
           className="flex flex-col lg:flex-row gap-6"
         >
-          <TabsList className="lg:w-64 w-full flex lg:flex-col gap-2 bg-white border border-gray-200 rounded-2xl p-2 shadow-sm">
+          <TabsList className="lg:w-64 w-full flex lg:flex-col gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-3 shadow-sm h-fit">
             {(["sendgrid", "mailgun", "mailjet", "elastic", "smtp"] as (keyof ProviderConfig)[]).map((provider) => (
               <TabsTrigger
                 key={provider}
                 value={provider}
-                className="justify-start w-full rounded-xl data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-inner capitalize"
+                className="justify-start w-full rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-gray-100 capitalize py-2.5"
               >
                 {provider}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 min-w-0 space-y-6">
             {(["sendgrid", "mailgun", "mailjet", "elastic", "smtp"] as (keyof ProviderConfig)[]).map((provider) => (
-              <TabsContent key={provider} value={provider} className="space-y-6">
+              <TabsContent key={provider} value={provider} className="space-y-6 mt-0">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -362,20 +362,20 @@ export function EmailProviderSettings({ className }: EmailProviderSettingsProps)
                     </div>
                     <p className="text-sm text-gray-600 max-w-2xl">{configurations[provider].description}</p>
                   </div>
-                  <Button variant="secondary" size="sm" className="gap-2" onClick={handleSaveConfiguration}>
+                  <Button variant="secondary" size="sm" className="gap-2 whitespace-nowrap" onClick={handleSaveConfiguration}>
                     <Settings className="w-4 h-4" />
                     Save {provider}
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{renderProviderConfig(provider)}</div>
+                <div className="grid grid-cols-1 gap-6">{renderProviderConfig(provider)}</div>
 
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4">
                   <div className="flex items-center gap-3 text-sm text-gray-700">
                     <AlertCircle className="w-5 h-5 text-amber-500" />
                     <span>Save your configuration before sending a test email.</span>
                   </div>
-                  <div className="flex items-center gap-3 w-full md:w-auto">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                     <Input
                       placeholder="test@yourcompany.com"
                       value={testEmail}

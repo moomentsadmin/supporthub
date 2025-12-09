@@ -130,10 +130,10 @@ export default function WhitelabelConfigForm({ config }: WhitelabelConfigProps) 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Configuration Form */}
-        <div className="space-y-6">
-          <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Configuration Form */}
+          <div className="space-y-6">
             <Tabs defaultValue="general" className="space-y-6">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="general">General</TabsTrigger>
@@ -307,8 +307,7 @@ export default function WhitelabelConfigForm({ config }: WhitelabelConfigProps) 
                   : "Create Configuration"}
               </Button>
             </div>
-          </form>
-        </div>
+          </div>
 
         {/* Enhanced Preview */}
         {previewMode && (
@@ -373,7 +372,8 @@ export default function WhitelabelConfigForm({ config }: WhitelabelConfigProps) 
             </Card>
           </div>
         )}
-      </div>
+        </div>
+      </form>
     </div>
   );
 }
