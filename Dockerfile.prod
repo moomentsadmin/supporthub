@@ -1,16 +1,17 @@
 # Production Dockerfile for SupportHub
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
 # Install security updates
-RUN apk update && apk upgrade
+RUN apt-get update && apt-get upgrade -y
 
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci
+# Force remove lockfile to ensure clean install on linux
+RUN rm -f package-lock.json && npm install && npm install -D @rollup/rollup-linux-x64-gnu
 
 # Copy all source code and config files
 COPY . .
@@ -22,16 +23,16 @@ RUN npx vite build
 RUN npx esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
 # Install security updates and required packages
-RUN apk update && apk upgrade && \
-    apk add --no-cache curl dumb-init && \
-    rm -rf /var/cache/apk/*
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y curl dumb-init && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create app user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S supporthub -u 1001 -G nodejs
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -s /bin/sh -m supporthub
 
 WORKDIR /app
 
@@ -39,7 +40,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production && \
+RUN npm install --only=production && \
     npm cache clean --force
 
 # Copy built application from builder stage
@@ -67,7 +68,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD curl -f http://localhost:5000/api/health || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]

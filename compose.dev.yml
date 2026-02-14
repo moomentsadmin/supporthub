@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: supporthub_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-supporthub}
+      POSTGRES_USER: ${POSTGRES_USER:-supporthub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - supporthub_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-supporthub}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application (Development Mode)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: supporthub_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-supporthub}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-supporthub}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      VERIFIED_SENDER_EMAIL: ${VERIFIED_SENDER_EMAIL:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+    volumes:
+      # Mount source code for live reloading
+      - .:/app
+      # Preserve container's node_modules
+      - /app/node_modules
+      - app_uploads:/app/uploads
+    networks:
+      - supporthub_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: supporthub_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./scripts/nginx-entrypoint.sh:/nginx-entrypoint.sh:ro
+      - nginx_ssl:/etc/nginx/ssl
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    entrypoint: [ "/bin/sh", "/nginx-entrypoint.sh" ]
+    depends_on:
+      - app
+    networks:
+      - supporthub_network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/health", "||", "exit", "1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # SSL Certificate Setup (runs once on deployment)
+  ssl_init:
+    image: certbot/certbot
+    container_name: supporthub_ssl_init
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+      - nginx_ssl:/etc/nginx/ssl
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./scripts/init-ssl.sh:/init-ssl.sh:ro
+    environment:
+      DOMAIN: ${DOMAIN}
+      EMAIL: ${EMAIL}
+    entrypoint: [ "/bin/sh", "/init-ssl.sh" ]
+    depends_on:
+      - nginx
+    networks:
+      - supporthub_network
+
+  # Certbot (keep it, though likely idle in localhost mode)
+  certbot:
+    image: certbot/certbot
+    container_name: supporthub_certbot
+    restart: unless-stopped
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot --webroot-path=/var/www/certbot; sleep 12h & wait $${!}; done;'"
+    depends_on:
+      - ssl_init
+    networks:
+      - supporthub_network
+
+networks:
+  supporthub_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  app_uploads:
+    driver: local
+  nginx_ssl:
+    driver: local
+  certbot_www:
+    driver: local
+  certbot_conf:
+    driver: local
