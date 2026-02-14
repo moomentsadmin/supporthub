@@ -41,31 +41,31 @@ import CustomerRegister from "@/pages/customer-register";
 import CustomerForgotPassword from "@/pages/customer-forgot-password";
 import CustomerResetPassword from "@/pages/customer-reset-password";
 import CustomerDashboard from "@/pages/customer-dashboard";
-import { ButtonFixer } from "@/components/button-fixer";
+
 
 function Router() {
   const { agent, isLoading: agentLoading, error: agentError } = useAuth();
   const { adminUser, isLoading: adminLoading } = useAdminAuth();
-  
+
   // FORCE correct path detection - this fixes the SPA routing bug
   const browserPath = window.location.pathname;
-  const currentPath = browserPath === '/' && window.location.href.includes('/admin/') 
-    ? window.location.href.split(window.location.origin)[1] 
+  const currentPath = browserPath === '/' && window.location.href.includes('/admin/')
+    ? window.location.href.split(window.location.origin)[1]
     : browserPath;
-    
+
   const isAdminRoute = currentPath.startsWith('/admin');
   const isAgentRoute = currentPath.startsWith('/agents');
-  
+
   // Enhanced debugging
   console.log('🔍 FIXED ROUTING DEBUG:', {
     'browserPath': browserPath,
-    'correctedPath': currentPath, 
+    'correctedPath': currentPath,
     'fullHref': window.location.href,
     'isAdminRoute': isAdminRoute,
     'adminUser exists': !!adminUser,
     'MISMATCH DETECTED': browserPath !== currentPath
   });
-  
+
   console.log('Router state:', {
     currentPath,
     isAdminRoute,
@@ -75,7 +75,7 @@ function Router() {
     agentError: agentError?.message,
     adminLoading
   });
-  
+
   if (agentLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -92,7 +92,7 @@ function Router() {
     if (!adminUser) {
       return <AdminLogin />;
     }
-    
+
     return (
       <Switch>
         <Route path="/admin" component={AdminDashboardNew} />
@@ -120,7 +120,7 @@ function Router() {
     if (!agent) {
       return <Login />;
     }
-    
+
     return (
       <Switch>
         <Route path="/agents" component={AgentDashboard} />
@@ -149,7 +149,7 @@ function Router() {
       <Route path="/customer/forgot-password" component={CustomerForgotPassword} />
       <Route path="/customer/reset-password" component={CustomerResetPassword} />
       <Route path="/customer/dashboard" component={CustomerDashboard} />
-      
+
       <Route path="/" component={PublicHome} />
       <Route component={NotFound} />
     </Switch>
@@ -161,7 +161,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <WhitelabelProvider>
         <TooltipProvider>
-          <ButtonFixer />
+
           <Toaster />
           <Router />
         </TooltipProvider>
