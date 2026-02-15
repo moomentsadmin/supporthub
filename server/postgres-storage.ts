@@ -81,7 +81,7 @@ export class PostgresStorage implements IStorage {
       this.db = null;
       return;
     }
-    
+
     try {
       const sql = neon(process.env.DATABASE_URL);
       this.db = drizzle(sql);
@@ -93,13 +93,13 @@ export class PostgresStorage implements IStorage {
 
   async initialize() {
     if (this.initialized) return;
-    
+
     // Check if database connection is available
     if (!this.db) {
       console.warn('Database not initialized. Skipping PostgresStorage initialization.');
       return;
     }
-    
+
     try {
       // Create default data if tables are empty
       await this.createDefaultData();
@@ -113,6 +113,24 @@ export class PostgresStorage implements IStorage {
   private async createDefaultData() {
     // Check if we already have data
     const existingAgents = await this.db.select().from(agents).limit(1);
+
+    // Ensure admin@company.com exists (requested by user)
+    const companyAdmin = await this.db.select().from(adminUsers).where(eq(adminUsers.email, "admin@company.com")).limit(1);
+    if (companyAdmin.length === 0) {
+      console.log('Creating requested admin user: admin@company.com');
+      const adminPassword = bcrypt.hashSync("admin123", 10);
+      const newAdmin = {
+        name: "Company Administrator",
+        email: "admin@company.com",
+        password: adminPassword,
+        role: "super_admin",
+        permissions: ["all"],
+        isActive: true,
+        lastLogin: null
+      };
+      await this.db.insert(adminUsers).values(newAdmin);
+    }
+
     if (existingAgents.length > 0) {
       return; // Data already exists
     }
@@ -136,7 +154,7 @@ export class PostgresStorage implements IStorage {
       },
       {
         name: "Lisa Wang",
-        email: "lisa.wang@supporthub.com", 
+        email: "lisa.wang@supporthub.com",
         password: agentPassword,
         role: "agent",
         avatar: "https://pixabay.com/get/g33f4c31906485611aac90ced194d185768b04474106365dbc5d067d3a1c3603078ee7f0631b6246a6fff05b24d0067981b7e6630b0e443ee1950e6669ad8def2_1280.jpg"
@@ -145,7 +163,7 @@ export class PostgresStorage implements IStorage {
         name: "Mike Johnson",
         email: "mike.johnson@supporthub.com",
         password: agentPassword,
-        role: "agent", 
+        role: "agent",
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
       }
     ];
@@ -163,7 +181,7 @@ export class PostgresStorage implements IStorage {
         category: "acknowledgment"
       },
       {
-        name: "Investigation - Looking into it", 
+        name: "Investigation - Looking into it",
         subject: "We're investigating your issue",
         content: "We're currently investigating the issue you reported. I'll update you as soon as we have more information.",
         category: "investigation"
@@ -179,7 +197,7 @@ export class PostgresStorage implements IStorage {
     for (const template of sampleTemplates) {
       await this.db.insert(templates).values(template);
     }
-    
+
     // Create default admin user
     const adminPassword = bcrypt.hashSync("admin123", 10);
     const defaultAdmin = {
@@ -192,7 +210,7 @@ export class PostgresStorage implements IStorage {
       lastLogin: null
     };
     await this.db.insert(adminUsers).values(defaultAdmin);
-    
+
     // Create default whitelabel config
     const defaultWhitelabel = {
       companyName: "SupportHub",
@@ -208,7 +226,7 @@ export class PostgresStorage implements IStorage {
       isActive: true
     };
     await this.db.insert(whitelabelConfig).values(defaultWhitelabel);
-    
+
     // Create default application settings
     const defaultSettings = [
       { key: "app_name", value: "SupportHub", category: "general", type: "string", description: "Application name", isPublic: true },
@@ -219,7 +237,7 @@ export class PostgresStorage implements IStorage {
       { key: "enable_chat", value: "true", category: "features", type: "boolean", description: "Enable live chat functionality for customers", isPublic: true },
       { key: "enable_phone_numbers", value: "true", category: "privacy", type: "boolean", description: "Enable phone number collection and display for customers", isPublic: true }
     ];
-    
+
     for (const setting of defaultSettings) {
       await this.db.insert(applicationSettings).values({
         ...setting,
@@ -229,10 +247,10 @@ export class PostgresStorage implements IStorage {
 
     // Create sample tickets for testing
     await this.createSampleTickets();
-    
+
     // Create sample knowledge base articles
     await this.createSampleKnowledgeBase();
-    
+
     // Create sample audit logs
     await this.createSampleAuditLogs();
   }
@@ -250,7 +268,7 @@ export class PostgresStorage implements IStorage {
         customerContact: "john.doe@example.com"
       },
       {
-        ticketNumber: "TK-2025-002", 
+        ticketNumber: "TK-2025-002",
         subject: "Password Reset Request",
         description: "Need help resetting my password. The reset email is not arriving.",
         status: "in-progress" as const,
@@ -286,7 +304,7 @@ export class PostgresStorage implements IStorage {
         tags: ["password", "reset", "account"]
       },
       {
-        title: "Billing and Payment Information", 
+        title: "Billing and Payment Information",
         content: "Our billing cycles run monthly. Payments are due on the first of each month. We accept credit cards, PayPal, and bank transfers.",
         category: "Billing",
         isPublished: true,
@@ -345,7 +363,7 @@ export class PostgresStorage implements IStorage {
     if (updates.password) {
       updates.password = await bcrypt.hash(updates.password, 10);
     }
-    
+
     const result = await this.db.update(agents)
       .set(updates)
       .where(eq(agents.id, id))
@@ -364,7 +382,7 @@ export class PostgresStorage implements IStorage {
     await this.initialize();
     const agent = await this.getAgentByEmail(email);
     if (!agent) return null;
-    
+
     const isValid = await bcrypt.compare(password, agent.password);
     return isValid ? agent : null;
   }
@@ -412,7 +430,7 @@ export class PostgresStorage implements IStorage {
     await this.initialize();
     const customer = await this.getCustomerByEmail(email);
     if (!customer) return null;
-    
+
     const isValid = await bcrypt.compare(password, customer.password);
     return isValid ? customer : null;
   }
@@ -443,12 +461,12 @@ export class PostgresStorage implements IStorage {
   async createTicket(insertTicket: InsertTicket): Promise<Ticket> {
     if (!this.checkDatabaseAvailability()) throw new Error('Database not available');
     await this.initialize();
-    
+
     // Generate truly unique ticket number using database sequence
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     const ticketNumber = `TK-${timestamp}-${random}`;
-    
+
     const result = await this.db.insert(tickets).values({
       ...insertTicket,
       ticketNumber,
@@ -599,10 +617,10 @@ export class PostgresStorage implements IStorage {
     endDate?: string;
   }): Promise<AuditLog[]> {
     await this.initialize();
-    
+
     try {
       let query = this.db.select().from(auditLogs);
-      
+
       // Apply filters
       const conditions = [];
       if (filters?.level) {
@@ -614,17 +632,17 @@ export class PostgresStorage implements IStorage {
       if (filters?.userType) {
         conditions.push(eq(auditLogs.userType, filters.userType));
       }
-      
+
       if (conditions.length > 0) {
         query = query.where(and(...conditions));
       }
-      
+
       // Apply pagination and ordering
       query = query
         .orderBy(desc(auditLogs.createdAt))
         .limit(filters?.limit || 50)
         .offset(filters?.offset || 0);
-      
+
       return await query;
     } catch (error) {
       console.log('Database audit logs not available, using fallback');
@@ -703,7 +721,7 @@ export class PostgresStorage implements IStorage {
     if (filters?.level) {
       filteredLogs = filteredLogs.filter(log => log.level === filters.level);
     }
-    
+
     const offset = filters?.offset || 0;
     const limit = filters?.limit || 50;
     return filteredLogs.slice(offset, offset + limit);
@@ -711,7 +729,7 @@ export class PostgresStorage implements IStorage {
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
     await this.initialize();
-    
+
     try {
       const result = await this.db.insert(auditLogs).values(log).returning();
       return result[0];
@@ -729,7 +747,7 @@ export class PostgresStorage implements IStorage {
   // Ticket forwarding
   async forwardTicket(forward: InsertTicketForward): Promise<TicketForward> {
     await this.initialize();
-    
+
     try {
       const result = await this.db.insert(ticketForwards).values(forward).returning();
       return result[0];
@@ -746,7 +764,7 @@ export class PostgresStorage implements IStorage {
 
   async getTicketForwards(ticketId: string): Promise<TicketForward[]> {
     await this.initialize();
-    
+
     try {
       return await this.db.select().from(ticketForwards).where(eq(ticketForwards.ticketId, ticketId));
     } catch (error) {
@@ -814,7 +832,7 @@ export class PostgresStorage implements IStorage {
     if (updates.password) {
       updates.password = await bcrypt.hash(updates.password, 10);
     }
-    
+
     const result = await this.db.update(adminUsers)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(adminUsers.id, id))
@@ -832,7 +850,7 @@ export class PostgresStorage implements IStorage {
     await this.initialize();
     const admin = await this.getAdminUserByEmail(email);
     if (!admin) return null;
-    
+
     const isValid = await bcrypt.compare(password, admin.password);
     return isValid ? admin : null;
   }
@@ -885,10 +903,10 @@ export class PostgresStorage implements IStorage {
   async updateApplicationSetting(key: string, value: string, updatedBy?: string): Promise<ApplicationSettings | undefined> {
     await this.initialize();
     const result = await this.db.update(applicationSettings)
-      .set({ 
-        value, 
+      .set({
+        value,
         updatedAt: new Date(),
-        updatedBy: updatedBy || null 
+        updatedBy: updatedBy || null
       })
       .where(eq(applicationSettings.key, key))
       .returning();
@@ -916,7 +934,7 @@ export class PostgresStorage implements IStorage {
   async updateChannel(id: string, updates: Partial<ChannelConfig>): Promise<ChannelConfig | undefined> {
     const channel = this.channels.get(id);
     if (!channel) return undefined;
-    
+
     const updatedChannel = { ...channel, ...updates };
     this.channels.set(id, updatedChannel);
     return updatedChannel;
@@ -1031,7 +1049,7 @@ export class PostgresStorage implements IStorage {
   async createChannelConfig(config: InsertChannelConfig): Promise<ChannelConfig> {
     if (!this.checkDatabaseAvailability()) throw new Error('Database not available');
     await this.initialize();
-    
+
     // Set default values for new channels
     const channelWithDefaults = {
       ...config,
@@ -1042,7 +1060,7 @@ export class PostgresStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     const result = await this.db.insert(channelConfigs).values(channelWithDefaults).returning();
     return result[0];
   }
@@ -1179,10 +1197,10 @@ export class PostgresStorage implements IStorage {
     try {
       const [updated] = await this.db
         .update(channelConfigs)
-        .set({ 
-          isActive, 
+        .set({
+          isActive,
           isOnline: isActive, // Set online status based on active status
-          updatedAt: new Date() 
+          updatedAt: new Date()
         })
         .where(eq(channelConfigs.id, id))
         .returning();
@@ -1241,9 +1259,9 @@ export class PostgresStorage implements IStorage {
     await this.initialize();
     try {
       let query = this.db.select().from(auditLogs);
-      
+
       const conditions = [];
-      
+
       if (filters.level) {
         conditions.push(eq(auditLogs.level, filters.level));
       }
@@ -1308,7 +1326,7 @@ export class PostgresStorage implements IStorage {
         metadata: { ip: "192.168.1.1", userAgent: "Mozilla/5.0" }
       },
       {
-        level: "info", 
+        level: "info",
         action: "ticket_created",
         description: "New support ticket created via email channel",
         userType: "system",
@@ -1332,7 +1350,7 @@ export class PostgresStorage implements IStorage {
         action: "settings_updated",
         description: "Chat functionality was enabled",
         userType: "admin",
-        userId: "admin-1", 
+        userId: "admin-1",
         userName: "Admin User",
         userEmail: "admin@company.com",
         metadata: { setting: "enable_chat", value: "true" }
