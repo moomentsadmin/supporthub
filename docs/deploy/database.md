@@ -103,7 +103,11 @@ doctl databases backup create supporthub-db
 
 **Connection Format:**
 ```bash
-DATABASE_URL=postgresql://username@server:password@server.postgres.database.azure.com:5432/database?sslmode=require
+# Flexible Server (Standard)
+DATABASE_URL=postgresql://username:password@server.postgres.database.azure.com:5432/database?sslmode=require
+
+# Single Server (Legacy)
+# DATABASE_URL=postgresql://username@server:password@server.postgres.database.azure.com:5432/database?sslmode=require
 ```
 
 **Setup Steps:**

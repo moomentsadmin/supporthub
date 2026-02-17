@@ -1,17 +1,16 @@
 # Production Dockerfile for SupportHub
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Install security updates
-RUN apt-get update && apt-get upgrade -y
+RUN apk update && apk upgrade && apk add --no-cache git
 
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
-
 # Install all dependencies (including dev dependencies for build)
-# Force remove lockfile to ensure clean install on linux
-RUN rm -f package-lock.json && npm install && npm install -D @rollup/rollup-linux-x64-gnu
+# Force remove lockfile to ensure clean install 
+RUN rm -f package-lock.json && npm install && npm install -D @rollup/rollup-linux-x64-musl
 
 # Copy all source code and config files
 COPY . .
@@ -23,16 +22,16 @@ RUN npx vite build
 RUN npx esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js
 
 # Production stage
-FROM node:20-slim AS production
+FROM node:20-alpine AS production
 
 # Install security updates and required packages
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y curl dumb-init && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk update && apk upgrade && \
+    apk add --no-cache curl dumb-init && \
+    rm -rf /var/cache/apk/*
 
 # Create app user for security
-RUN groupadd -g 1001 nodejs && \
-    useradd -u 1001 -g nodejs -s /bin/sh -m supporthub
+RUN addgroup -g 1001 nodejs && \
+    adduser -u 1001 -G nodejs -h /home/supporthub -s /bin/sh -D supporthub
 
 WORKDIR /app
 

@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters, BlobSASPermissions } from "@azure/storage-blob";
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
@@ -102,6 +103,85 @@ export class LocalStorageProvider implements IStorageProvider {
             stream: fs.createReadStream(fullPath),
             contentLength: stat.size,
             contentType: "application/octet-stream" // We might need to store mime type separately or guess it
+        };
+    }
+}
+
+export class AzureBlobStorageProvider implements IStorageProvider {
+    private client: BlobServiceClient;
+    private containerName: string;
+    private accountName: string;
+    private accountKey: string;
+
+    constructor() {
+        this.accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || "";
+        this.accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY || "";
+        this.containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || "supporthub-uploads";
+
+        if (!this.accountName || !this.accountKey) {
+            // Only throw if this provider is actively selected
+            // But constructor is called inside factory?
+            // Checking lazily might be better, but strict is okay.
+            if (process.env.STORAGE_PROVIDER === "AZURE") {
+                throw new Error("Azure Storage credentials (AZURE_STORAGE_ACCOUNT_NAME, AZURE_STORAGE_ACCOUNT_KEY) are missing.");
+            }
+        }
+
+        if (this.accountName && this.accountKey) {
+            const credential = new StorageSharedKeyCredential(this.accountName, this.accountKey);
+            this.client = new BlobServiceClient(
+                `https://${this.accountName}.blob.core.windows.net`,
+                credential
+            );
+        } else {
+            // Mock client or null? Throw error if methods called?
+            this.client = {} as any;
+        }
+    }
+
+    async getUploadUrl(filePath: string, contentType: string = "application/octet-stream"): Promise<string> {
+        if (!this.accountName) throw new Error("Azure Storage credentials missing");
+
+        const containerClient = this.client.getContainerClient(this.containerName);
+        await containerClient.createIfNotExists();
+
+        const permissions = new BlobSASPermissions();
+        permissions.write = true;
+        permissions.create = true;
+        permissions.read = true;
+
+        const startsOn = new Date();
+        const expiresOn = new Date(startsOn.valueOf() + 3600 * 1000); // 1 hour
+
+        const credential = new StorageSharedKeyCredential(this.accountName, this.accountKey);
+        const sasToken = generateBlobSASQueryParameters({
+            containerName: this.containerName,
+            blobName: filePath,
+            permissions,
+            startsOn,
+            expiresOn,
+            contentType
+        }, credential).toString();
+
+        return `${containerClient.getBlockBlobClient(filePath).url}?${sasToken}`;
+    }
+
+    async getFile(filePath: string): Promise<StorageFile> {
+        if (!this.accountName) throw new Error("Azure Storage credentials missing");
+
+        const containerClient = this.client.getContainerClient(this.containerName);
+        const blobClient = containerClient.getBlockBlobClient(filePath);
+
+        const downloadBlockBlobResponse = await blobClient.download();
+
+        if (!downloadBlockBlobResponse.readableStreamBody) {
+            throw new Error("Failed to download blob stream");
+        }
+
+        return {
+            stream: downloadBlockBlobResponse.readableStreamBody as Readable,
+            contentType: downloadBlockBlobResponse.contentType,
+            contentLength: downloadBlockBlobResponse.contentLength
         };
     }
 }
