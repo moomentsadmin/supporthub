@@ -7,12 +7,13 @@ import multer from "multer";
 import crypto from "crypto";
 import path from "path";
 import { z } from "zod";
-import { 
-  insertTicketSchema, 
-  insertMessageSchema, 
+import {
+  insertTicketSchema,
+  insertMessageSchema,
   insertTicketForwardSchema,
-  loginSchema 
+  loginSchema
 } from "@shared/schema";
+import * as bcrypt from "bcrypt";
 // Email service will be imported as needed
 import { validateDatabaseConnection } from "./db";
 import {
@@ -80,8 +81,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get("/api/health", (req: Request, res: Response) => {
     const dbConnected = validateDatabaseConnection();
-    res.json({ 
-      status: "ok", 
+    res.json({
+      status: "ok",
       database: dbConnected ? "connected" : "unavailable",
       timestamp: new Date().toISOString()
     });
@@ -91,17 +92,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tickets", async (req: Request, res: Response) => {
     try {
       const ticketData = req.body;
-      
+
       // Validate required fields
       if (!ticketData.subject || !ticketData.description || !ticketData.customerName || !ticketData.customerContact || !ticketData.channel) {
-        return res.status(400).json({ 
-          message: "Missing required fields: subject, description, customerName, customerContact, channel" 
+        return res.status(400).json({
+          message: "Missing required fields: subject, description, customerName, customerContact, channel"
         });
       }
-      
+
       // Remove ticketNumber from input as it will be auto-generated
       delete ticketData.ticketNumber;
-      
+
       const ticket = await storage.createTicket(ticketData);
       res.status(201).json(ticket);
     } catch (error) {
@@ -114,21 +115,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/public/tickets/search", async (req: Request, res: Response) => {
     try {
       const { email } = req.query;
-      
+
       if (!email || typeof email !== 'string') {
         return res.status(400).json({ message: "Email parameter is required" });
       }
-      
+
       console.log(`Searching tickets for email: ${email}`);
       const allTickets = await storage.getAllTickets();
       console.log(`Total tickets in database: ${allTickets.length}`);
-      
-      const userTickets = allTickets.filter(ticket => 
+
+      const userTickets = allTickets.filter(ticket =>
         ticket.customerContact?.toLowerCase() === email.toLowerCase()
       );
-      
+
       console.log(`Found ${userTickets.length} tickets for ${email}`);
-      
+
       // Return limited public information
       const publicTickets = userTickets.map(ticket => ({
         id: ticket.id,
@@ -142,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerContact: ticket.customerContact,
         createdAt: ticket.createdAt
       }));
-      
+
       res.json(publicTickets);
     } catch (error) {
       console.error("Error searching tickets:", error);
@@ -155,11 +156,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const ticket = await storage.getTicket(id);
-      
+
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
       }
-      
+
       // Return limited public information
       const publicTicket = {
         id: ticket.id,
@@ -173,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerContact: ticket.customerContact,
         createdAt: ticket.createdAt
       };
-      
+
       res.json(publicTicket);
     } catch (error) {
       console.error("Error fetching ticket:", error);
@@ -186,17 +187,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { message } = req.body;
-      
+
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message is required" });
       }
-      
+
       // Get the ticket to verify it exists
       const ticket = await storage.getTicket(id);
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
       }
-      
+
       // Create a message from the customer
       const newMessage = await storage.createMessage({
         ticketId: id,
@@ -205,15 +206,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderName: ticket.customerName,
         senderId: null
       });
-      
+
       // Update ticket status to 'open' if it was resolved/closed
       if (ticket.status === 'resolved' || ticket.status === 'closed') {
-        await storage.updateTicket(id, { 
+        await storage.updateTicket(id, {
           status: 'open',
           updatedAt: new Date()
         });
       }
-      
+
       res.status(201).json(newMessage);
     } catch (error) {
       console.error("Error creating ticket reply:", error);
@@ -226,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { category, search } = req.query;
       let articles;
-      
+
       if (search && typeof search === 'string') {
         articles = await storage.searchKnowledgeBase(search);
       } else if (category && typeof category === 'string') {
@@ -234,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         articles = await storage.getPublishedKnowledgeBaseArticles();
       }
-      
+
       // Return articles without full content for listing
       const articleSummaries = articles.map(article => ({
         id: article.id,
@@ -248,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: article.createdAt,
         updatedAt: article.updatedAt
       }));
-      
+
       res.json(articleSummaries);
     } catch (error) {
       console.error("Error fetching knowledge base articles:", error);
@@ -260,14 +261,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const article = await storage.getKnowledgeBaseArticle(id);
-      
+
       if (!article || !article.isPublished) {
         return res.status(404).json({ message: "Article not found" });
       }
-      
+
       // Increment view count
       await storage.incrementKnowledgeBaseViews(id);
-      
+
       // Return full article content
       res.json(article);
     } catch (error) {
@@ -280,16 +281,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { helpful } = req.body;
-      
+
       if (typeof helpful !== 'boolean') {
         return res.status(400).json({ message: "Helpful parameter must be boolean" });
       }
-      
+
       const article = await storage.getKnowledgeBaseArticle(id);
       if (!article || !article.isPublished) {
         return res.status(404).json({ message: "Article not found" });
       }
-      
+
       await storage.rateKnowledgeBaseArticle(id, helpful);
       res.json({ message: "Rating recorded successfully" });
     } catch (error) {
@@ -314,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/public/chat/start", async (req: Request, res: Response) => {
     try {
       const { name, email, message } = req.body;
-      
+
       if (!name || !email || !message) {
         return res.status(400).json({ message: "Name, email, and initial message are required" });
       }
@@ -348,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/public/chat/sessions/:id/messages", async (req: Request, res: Response) => {
     try {
       const { content, sender, senderName } = req.body;
-      
+
       if (!content) {
         return res.status(400).json({ message: "Message content is required" });
       }
@@ -392,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/public/chat/message", async (req: Request, res: Response) => {
     try {
       const { sessionId, content } = req.body;
-      
+
       if (!sessionId || !content) {
         return res.status(400).json({ message: "Session ID and content are required" });
       }
@@ -424,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       const agent = await storage.validateAgent(email, password);
-      
+
       if (!agent) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -467,12 +468,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session?.agentId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const agent = await storage.getAgent(req.session.agentId);
     if (!agent) {
       return res.status(404).json({ message: "Agent not found" });
     }
-    
+
     res.json({ agent: { ...agent, password: undefined } });
   });
 
@@ -483,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
       }
-      
+
       let assignedAgent = null;
       if (ticket.assignedAgentId) {
         assignedAgent = await storage.getAgent(ticket.assignedAgentId);
@@ -491,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           assignedAgent = { ...assignedAgent, password: undefined };
         }
       }
-      
+
       res.json({ ...ticket, assignedAgent });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch ticket" });
@@ -511,11 +512,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const updates = req.body;
       const ticket = await storage.updateTicket(req.params.id, updates);
-      
+
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
       }
-      
+
       res.json(ticket);
     } catch (error) {
       res.status(500).json({ message: "Failed to update ticket" });
@@ -527,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ticketId = req.params.id;
       const agentId = req.session.agentId!;
-      
+
       // Get the current agent info
       const agent = await storage.getAgent(agentId);
       if (!agent) {
@@ -544,10 +545,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create the forward record
       const forward = await storage.forwardTicket(forwardData);
-      
+
       // TODO: Send email notification if external forward
       // TODO: Send internal notification if internal forward
-      
+
       res.json(forward);
     } catch (error) {
       console.error("Failed to forward ticket:", error);
@@ -569,7 +570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status, assignedTo } = req.query;
       let tickets;
-      
+
       if (status) {
         tickets = await storage.getTicketsByStatus(status as string);
       } else if (assignedTo) {
@@ -577,7 +578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         tickets = await storage.getAllTickets();
       }
-      
+
       // Get assigned agents for tickets
       const ticketsWithAgents = await Promise.all(
         tickets.map(async (ticket) => {
@@ -591,7 +592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...ticket, assignedAgent };
         })
       );
-      
+
       res.json(ticketsWithAgents);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tickets" });
@@ -603,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const agentId = req.session.agentId!;
       const tickets = await storage.getTicketsByAgent(agentId);
-      
+
       // Get assigned agents for tickets
       const ticketsWithAgents = await Promise.all(
         tickets.map(async (ticket) => {
@@ -617,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...ticket, assignedAgent };
         })
       );
-      
+
       res.json(ticketsWithAgents);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tickets" });
@@ -628,12 +629,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ticketData = insertTicketSchema.parse(req.body);
       const ticket = await storage.createTicket(ticketData);
-      
+
       // Send notification to available agents
       try {
         const { sendAgentNotification } = await import('./services/email');
         const agents = await storage.getAllAgents();
-        
+
         for (const agent of agents) {
           if (agent.email && agent.id !== (req.session as any)?.agentId) { // Don't notify the creator
             await sendAgentNotification(agent.email, ticket);
@@ -643,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (notificationError) {
         console.error('Failed to send agent notifications:', notificationError);
       }
-      
+
       res.status(201).json(ticket);
     } catch (error) {
       res.status(400).json({ message: "Invalid ticket data" });
@@ -654,11 +655,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const updates = req.body;
       const ticket = await storage.updateTicket(req.params.id, updates);
-      
+
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
       }
-      
+
       res.json(ticket);
     } catch (error) {
       res.status(500).json({ message: "Failed to update ticket" });
@@ -679,25 +680,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/agent/dashboard", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const agentId = req.session.agentId!;
-      
+
       // Get all tickets for the dashboard view
       const allTickets = await storage.getAllTickets();
-      
+
       // Get agent's assigned tickets
       const myTickets = await storage.getTicketsByAgent(agentId);
-      
+
       // Get available tickets (unassigned)
       const availableTickets = allTickets.filter(ticket => !ticket.assignedAgentId);
-      
+
       // Calculate stats
       const myOpenTickets = myTickets.filter(t => t.status === 'open').length;
       const myInProgressTickets = myTickets.filter(t => t.status === 'in-progress').length;
       const myResolvedToday = myTickets.filter(t => {
         const today = new Date().toDateString();
-        const ticketDate = new Date(t.updatedAt || t.createdAt).toDateString();
+        const ticketDate = new Date((t.updatedAt || t.createdAt) as Date).toDateString();
         return t.status === 'resolved' && ticketDate === today;
       }).length;
-      
+
       // Add agent info to tickets
       const myTicketsWithAgents = await Promise.all(
         myTickets.map(async (ticket) => {
@@ -711,7 +712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...ticket, assignedAgent };
         })
       );
-      
+
       const availableTicketsWithAgents = await Promise.all(
         availableTickets.map(async (ticket) => {
           let assignedAgent = null;
@@ -724,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...ticket, assignedAgent };
         })
       );
-      
+
       res.json({
         myTickets: myTicketsWithAgents,
         availableTickets: availableTicketsWithAgents,
@@ -772,21 +773,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Agent not found" });
       }
 
-      const { 
+      const {
         content,
         message,
         htmlContent,
         isHtmlFormat = false,
-        status, 
+        status,
         sendEmail = true,
         emailTo,
         emailCc,
         emailBcc,
         useSignature = true
       } = req.body;
-      
+
       const messageText = content || message;
-      
+
       if (!messageText) {
         return res.status(400).json({ message: "Message content is required" });
       }
@@ -820,7 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const createdMessage = await storage.createMessage(messageData);
-      
+
       // Update ticket status if provided
       if (status) {
         await storage.updateTicket(req.params.id, { status });
@@ -882,9 +883,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/agents/signature", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { signature, signatureImage } = req.body;
-      const agent = await storage.updateAgent(req.session.agentId!, { 
-        signature, 
-        signatureImage 
+      const agent = await storage.updateAgent(req.session.agentId!, {
+        signature,
+        signatureImage
       });
       if (!agent) {
         return res.status(404).json({ message: "Agent not found" });
@@ -900,10 +901,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { signature, signatureImage } = req.body;
       const { agentId } = req.params;
-      
-      const agent = await storage.updateAgent(agentId, { 
-        signature, 
-        signatureImage 
+
+      const agent = await storage.updateAgent(agentId, {
+        signature,
+        signatureImage
       });
       if (!agent) {
         return res.status(404).json({ message: "Agent not found" });
@@ -927,11 +928,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Local storage upload handler
+  app.put("/api/storage/upload/local", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      await objectStorageService.handleLocalUpload(req, res);
+    } catch (error) {
+      console.error("Local upload error:", error);
+      if (!res.headersSent) res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
   // Create attachment record after file is uploaded to object storage
   app.put("/api/attachments", requireAuth, async (req: Request, res: Response) => {
     try {
       const { attachmentURL, ticketId, messageId, filename, mimeType, size } = req.body;
-      
+
       if (!attachmentURL || !filename) {
         return res.status(400).json({ error: "attachmentURL and filename are required" });
       }
@@ -1087,16 +1099,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/agent/tickets/:id/escalate", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ticketId = req.params.id;
-      
+
       const ticket = await storage.updateTicket(ticketId, {
         priority: 'high',
         status: 'in-progress'
       });
-      
+
       if (!ticket) {
         return res.status(404).json({ message: "Ticket not found" });
       }
-      
+
       res.json({ message: "Ticket escalated successfully", ticket });
     } catch (error) {
       console.error("Error escalating ticket:", error);
@@ -1150,8 +1162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateTicket(ticketId, { assignedAgentId: assignToAgent });
       }
 
-      res.json({ 
-        message: "Ticket forwarded successfully", 
+      res.json({
+        message: "Ticket forwarded successfully",
         forwardMessage,
         ticket: assignToAgent ? await storage.getTicket(ticketId) : ticket
       });
@@ -1166,22 +1178,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const agentId = req.session.agentId!;
       const { name, email, signature } = req.body;
-      
+
       // Validate input
       if (!name || !email) {
         return res.status(400).json({ message: "Name and email are required" });
       }
-      
+
       const updatedAgent = await storage.updateAgent(agentId, {
         name,
         email,
         signature
       });
-      
+
       if (!updatedAgent) {
         return res.status(404).json({ message: "Agent not found" });
       }
-      
+
       res.json({ message: "Profile updated successfully", agent: { ...updatedAgent, password: undefined } });
     } catch (error) {
       console.error("Error updating agent profile:", error);
@@ -1193,40 +1205,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const agentId = req.session.agentId!;
       const { currentPassword, newPassword } = req.body;
-      
+
       // Validate input
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Current password and new password are required" });
       }
-      
+
       if (newPassword.length < 6) {
         return res.status(400).json({ message: "Password must be at least 6 characters long" });
       }
-      
+
       // Get current agent
       const agent = await storage.getAgent(agentId);
       if (!agent) {
         return res.status(404).json({ message: "Agent not found" });
       }
-      
+
       // Verify current password
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, agent.password);
       if (!isCurrentPasswordValid) {
         return res.status(400).json({ message: "Current password is incorrect" });
       }
-      
+
       // Hash new password
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-      
+
       // Update password
       const updatedAgent = await storage.updateAgent(agentId, {
         password: hashedNewPassword
       });
-      
+
       if (!updatedAgent) {
         return res.status(404).json({ message: "Agent not found" });
       }
-      
+
       res.json({ message: "Password updated successfully" });
     } catch (error) {
       console.error("Error updating agent password:", error);
@@ -1239,16 +1251,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const agentId = req.session.agentId!;
       const { signature, signatureImage } = req.body;
-      
+
       const updatedAgent = await storage.updateAgent(agentId, {
         signature,
         signatureImage
       });
-      
+
       if (!updatedAgent) {
         return res.status(404).json({ message: "Agent not found" });
       }
-      
+
       res.json({ message: "Signature updated successfully" });
     } catch (error) {
       console.error("Error updating signature:", error);
@@ -1271,14 +1283,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/email/test", requireAuth, async (req: Request, res: Response) => {
     try {
       const { to, subject = "Test Email from SupportHub" } = req.body;
-      
+
       if (!to) {
         return res.status(400).json({ message: "Recipient email address required" });
       }
 
       const { sendEmail } = await import('./email-service');
       const verifiedSender = process.env.VERIFIED_SENDER_EMAIL || 'noreply@supporthub.com';
-      
+
       const success = await sendEmail({
         to,
         from: verifiedSender,
@@ -1302,7 +1314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/email/configure", requireAuth, async (req: Request, res: Response) => {
     try {
       const { provider, configuration } = req.body;
-      
+
       if (!provider || !configuration) {
         return res.status(400).json({ message: "Provider and configuration are required" });
       }
@@ -1310,10 +1322,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Note: This is a UI-only configuration for development
       // In production, these would be set as environment variables
       console.log(`Email configuration updated: ${provider}`, configuration);
-      
-      res.json({ 
-        message: `${provider} configuration saved successfully. Note: For production, set these as environment variables.`, 
-        success: true 
+
+      res.json({
+        message: `${provider} configuration saved successfully. Note: For production, set these as environment variables.`,
+        success: true
       });
     } catch (error) {
       console.error("Error saving email configuration:", error);
@@ -1324,16 +1336,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/agents/:id/signature", requireAdminAuth, async (req: Request, res: Response) => {
     try {
       const { signature, signatureImage } = req.body;
-      
+
       const updatedAgent = await storage.updateAgent(req.params.id, {
         signature,
         signatureImage
       });
-      
+
       if (!updatedAgent) {
         return res.status(404).json({ message: "Agent not found" });
       }
-      
+
       res.json({ message: "Signature updated successfully" });
     } catch (error) {
       console.error("Error updating agent signature:", error);
@@ -1347,11 +1359,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allTickets = await storage.getAllTickets();
       const openTickets = allTickets.filter(t => t.status === 'open').length;
       const inProgressTickets = allTickets.filter(t => t.status === 'in-progress').length;
-      
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const resolvedToday = allTickets.filter(t => 
-        t.status === 'resolved' && 
+      const resolvedToday = allTickets.filter(t =>
+        t.status === 'resolved' &&
         new Date(t.updatedAt!).getTime() >= today.getTime()
       ).length;
 
@@ -1377,27 +1389,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get tickets assigned to this agent
       const myTickets = allTickets.filter(ticket => ticket.assignedAgentId === agentId);
-      
+
       // Get available tickets (unassigned)
       const availableTickets = allTickets.filter(ticket => !ticket.assignedAgentId);
 
       // Calculate stats
       const myOpenTickets = myTickets.filter(t => t.status === 'open').length;
       const myInProgressTickets = myTickets.filter(t => t.status === 'in-progress').length;
-      
+
       // Resolved today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const myResolvedToday = myTickets.filter(t => 
-        t.status === 'resolved' && 
+      const myResolvedToday = myTickets.filter(t =>
+        t.status === 'resolved' &&
         new Date(t.updatedAt || t.createdAt || 0) >= today
       ).length;
 
       const dashboardData = {
-        myTickets: myTickets.sort((a, b) => 
+        myTickets: myTickets.sort((a, b) =>
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
         ),
-        availableTickets: availableTickets.sort((a, b) => 
+        availableTickets: availableTickets.sort((a, b) =>
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
         ),
         stats: {
@@ -1420,11 +1432,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const agents = await storage.getAllAgents();
       const allTickets = await storage.getAllTickets();
-      
+
       const performance = agents.map(agent => {
         const agentTickets = allTickets.filter(t => t.assignedAgentId === agent.id);
         const resolvedTickets = agentTickets.filter(t => t.status === 'resolved');
-        
+
         return {
           agentId: agent.id,
           agentName: agent.name,
@@ -1433,7 +1445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           satisfactionScore: Math.floor(Math.random() * 20) + 80 // 80-100%
         };
       });
-      
+
       res.json(performance);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch performance data" });
@@ -1447,11 +1459,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!agent) {
         return res.status(404).json({ message: "Agent not found" });
       }
-      
+
       const allTickets = await storage.getAllTickets();
       const agentTickets = allTickets.filter(t => t.assignedAgentId === agentId);
       const resolvedTickets = agentTickets.filter(t => t.status === 'resolved');
-      
+
       const performance = {
         agentId: agent.id,
         agentName: agent.name,
@@ -1459,7 +1471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avgResolutionTime: "2.1h", // Mock calculation
         satisfactionScore: Math.floor(Math.random() * 15) + 85 // 85-100%
       };
-      
+
       res.json(performance);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch performance data" });
@@ -1483,10 +1495,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!session) {
         return res.status(404).json({ message: "Chat session not found" });
       }
-      
+
       // Get messages for this session
       const messages = await storage.getMessagesByChatSession(req.params.id);
-      
+
       res.json({
         ...session,
         messages
@@ -1569,7 +1581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/channels/status", requireAuth, (req: Request, res: Response) => {
     res.json({
       email: "connected",
-      whatsapp: "connected", 
+      whatsapp: "connected",
       twitter: "error",
       facebook: "disconnected"
     });
