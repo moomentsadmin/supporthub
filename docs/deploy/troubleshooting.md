@@ -382,16 +382,16 @@ psql "$DATABASE_URL" -c "SELECT count(*) FROM sessions;"
 **Diagnosis:**
 ```bash
 # Check container status
-docker-compose ps
+docker compose ps
 
 # View container logs
-docker-compose logs app
+docker compose logs app
 
 # Check container resources
 docker stats
 
 # Inspect container
-docker-compose exec app sh
+docker compose exec app sh
 ```
 
 **Solutions:**
@@ -402,19 +402,19 @@ docker-compose exec app sh
    docker build -f Dockerfile.prod -t supporthub .
    
    # Check environment variables
-   docker-compose config
+   docker compose config
    
    # Restart services
-   docker-compose down && docker-compose up -d
+   docker compose down && docker compose up -d
    ```
 
 2. **Database connection in Docker:**
    ```bash
    # Ensure correct hostname (service name)
-   # Use 'db:5432' not 'localhost:5432' in docker-compose
+   # Use 'db:5432' not 'localhost:5432' in docker compose
    
    # Check network connectivity
-   docker-compose exec app ping db
+   docker compose exec app ping db
    ```
 
 ## 🔧 Platform-Specific Issues

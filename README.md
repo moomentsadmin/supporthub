@@ -69,7 +69,7 @@ EMAIL=admin@your-domain.com # For SSL certificate notifications
 Automatically sets up Nginx with Let's Encrypt for HTTPS. Ideal for direct internet exposure.
 
 ```bash
-docker-compose -f compose.production.yml up -d --build
+docker compose -f compose.production.yml up -d --build
 ```
 > The application will be available at `https://your-domain.com`.
 
@@ -77,7 +77,7 @@ docker-compose -f compose.production.yml up -d --build
 If you are terminating SSL elsewhere (e.g. AWS ALB, Cloudflare), use this lighter configuration which exposes the app on port 5000.
 
 ```bash
-docker-compose -f compose.nossl.yml up -d --build
+docker compose -f compose.nossl.yml up -d --build
 ```
 > The application will be available at `http://your-server-ip:5000`.
 
@@ -86,7 +86,7 @@ For testing and development on your local machine. Mounts source code for live u
 
 ```bash
 # Uses self-signed certificate for https://localhost
-docker-compose -f compose.dev.yml up -d --build
+docker compose -f compose.dev.yml up -d --build
 ```
 > Access at `https://localhost` (accept the self-signed certificate warning).
 
