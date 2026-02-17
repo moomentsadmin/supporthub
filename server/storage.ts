@@ -1,9 +1,9 @@
-import { 
-  type Agent, 
-  type InsertAgent, 
+import {
+  type Agent,
+  type InsertAgent,
   type Customer,
   type InsertCustomer,
-  type Ticket, 
+  type Ticket,
   type InsertTicket,
   type Message,
   type InsertMessage,
@@ -53,10 +53,10 @@ export interface IStorage {
   updateAgent(id: string, updates: Partial<Agent>): Promise<Agent | undefined>;
   deleteAgent(id: string): Promise<boolean>;
   getAllAgents(): Promise<Agent[]>;
-  
+
   // Authentication
   validateAgent(email: string, password: string): Promise<Agent | null>;
-  
+
   // Customer management
   getCustomer(id: string): Promise<Customer | undefined>;
   getCustomerByEmail(email: string): Promise<Customer | undefined>;
@@ -65,7 +65,7 @@ export interface IStorage {
   deleteCustomer(id: string): Promise<boolean>;
   getAllCustomers(): Promise<Customer[]>;
   validateCustomer(email: string, password: string): Promise<Customer | null>;
-  
+
   // Ticket management
   getTicket(id: string): Promise<Ticket | undefined>;
   getAllTickets(): Promise<Ticket[]>;
@@ -73,27 +73,27 @@ export interface IStorage {
   getTicketsByStatus(status: string): Promise<Ticket[]>;
   createTicket(ticket: InsertTicket): Promise<Ticket>;
   updateTicket(id: string, updates: Partial<Ticket>): Promise<Ticket | undefined>;
-  
+
   // Message management
   getMessagesByTicket(ticketId: string): Promise<Message[]>;
   getTicketMessages(ticketId: string): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
-  
+
   // Attachment management
   getAttachment(id: string): Promise<Attachment | undefined>;
   createAttachment(attachment: InsertAttachment): Promise<Attachment>;
   getAttachmentsByTicket(ticketId: string): Promise<Attachment[]>;
-  
+
   // Template management
   getAllTemplates(): Promise<Template[]>;
   createTemplate(template: InsertTemplate): Promise<Template>;
   updateTemplate(id: string, updates: Partial<Template>): Promise<Template | undefined>;
   deleteTemplate(id: string): Promise<boolean>;
-  
+
   // Automation rules
   getAllAutomationRules(): Promise<AutomationRule[]>;
   createAutomationRule(rule: InsertAutomationRule): Promise<AutomationRule>;
-  
+
   // Audit logs
   getAuditLogs(filters?: {
     limit?: number;
@@ -105,11 +105,11 @@ export interface IStorage {
     endDate?: string;
   }): Promise<AuditLog[]>;
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
-  
+
   // Ticket forwarding
   forwardTicket(forward: InsertTicketForward): Promise<TicketForward>;
   getTicketForwards(ticketId: string): Promise<TicketForward[]>;
-  
+
   // Chat sessions
   getChatSession(id: string): Promise<ChatSession | undefined>;
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
@@ -119,11 +119,11 @@ export interface IStorage {
   endChatSession(id: string): Promise<void>;
   getMessagesByChatSession(sessionId: string): Promise<Message[]>;
   createChatMessage(message: any): Promise<any>;
-  
+
   // Analytics
   createAnalytics(analytics: InsertAnalytics): Promise<Analytics>;
   getAnalyticsByDateRange(startDate: Date, endDate: Date): Promise<Analytics[]>;
-  
+
   // Admin management
   getAdminUser(username: string): Promise<AdminUser | undefined>;
   getAdminUserById(id: string): Promise<AdminUser | undefined>;
@@ -133,12 +133,12 @@ export interface IStorage {
   updateAdminUser(id: string, updates: Partial<AdminUser>): Promise<AdminUser | undefined>;
   deleteAdminUser(id: string): Promise<boolean>;
   validateAdminUser(email: string, password: string): Promise<AdminUser | null>;
-  
+
   // Whitelabel configuration
   getWhitelabelConfig(): Promise<WhitelabelConfig | undefined>;
   createWhitelabelConfig(config: InsertWhitelabelConfig): Promise<WhitelabelConfig>;
   updateWhitelabelConfig(id: string, updates: Partial<WhitelabelConfig>): Promise<WhitelabelConfig | undefined>;
-  
+
   // Application settings
   getApplicationSetting(key: string): Promise<ApplicationSettings | undefined>;
   getAllApplicationSettings(): Promise<ApplicationSettings[]>;
@@ -146,14 +146,14 @@ export interface IStorage {
   createApplicationSetting(setting: InsertApplicationSettings): Promise<ApplicationSettings>;
   updateApplicationSetting(key: string, value: string, updatedBy?: string): Promise<ApplicationSettings | undefined>;
   deleteApplicationSetting(key: string): Promise<boolean>;
-  
+
   // Channel management (legacy interface - now using ChannelConfig)
   getChannels(): Promise<ChannelConfig[]>;
   createChannel(channel: InsertChannelConfig): Promise<ChannelConfig>;
   updateChannel(id: string, updates: Partial<ChannelConfig>): Promise<ChannelConfig | undefined>;
   getChannel(id: string): Promise<ChannelConfig | undefined>;
   deleteChannel(id: string): Promise<boolean>;
-  
+
   // Knowledge Base
   getKnowledgeBaseArticle(id: string): Promise<KnowledgeBase | undefined>;
   getAllKnowledgeBaseArticles(): Promise<KnowledgeBase[]>;
@@ -165,7 +165,7 @@ export interface IStorage {
   deleteKnowledgeBaseArticle(id: string): Promise<boolean>;
   incrementKnowledgeBaseViews(id: string): Promise<void>;
   rateKnowledgeBaseArticle(id: string, helpful: boolean): Promise<void>;
-  
+
   // Channel Configuration management
   getChannelConfig(id: string): Promise<ChannelConfig | undefined>;
   getAllChannelConfigs(): Promise<ChannelConfig[]>;
@@ -179,10 +179,10 @@ export interface IStorage {
   createPasswordResetToken(email: string, token: string, expiresAt: Date): Promise<void>;
   getPasswordResetToken(token: string): Promise<any>;
   deletePasswordResetToken(token: string): Promise<void>;
-  
+
   // Notification operations
   getUnreadNotificationCount(agentId: string): Promise<number>;
-  
+
   // Audit logging operations
   createAuditLog(auditLog: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(filters?: {
@@ -238,7 +238,7 @@ export class MemStorage implements IStorage {
     // Create sample agents synchronously  
     const agentPassword = bcrypt.hashSync("password123", 10);
     const adminPassword = bcrypt.hashSync("admin123", 10);
-    
+
     const agents = [
       {
         name: "Agent",
@@ -256,7 +256,7 @@ export class MemStorage implements IStorage {
       },
       {
         name: "Lisa Wang",
-        email: "lisa.wang@supporthub.com", 
+        email: "lisa.wang@supporthub.com",
         password: agentPassword,
         role: "agent",
         avatar: "https://pixabay.com/get/g33f4c31906485611aac90ced194d185768b04474106365dbc5d067d3a1c3603078ee7f0631b6246a6fff05b24d0067981b7e6630b0e443ee1950e6669ad8def2_1280.jpg"
@@ -265,7 +265,7 @@ export class MemStorage implements IStorage {
         name: "Mike Johnson",
         email: "mike.johnson@supporthub.com",
         password: agentPassword,
-        role: "agent", 
+        role: "agent",
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
       }
     ];
@@ -273,11 +273,11 @@ export class MemStorage implements IStorage {
     // Create agents synchronously
     for (const agent of agents) {
       const id = randomUUID();
-      const agentData: Agent = { 
-        ...agent, 
+      const agentData: Agent = {
+        ...agent,
         id,
         avatar: agent.avatar || null,
-        createdAt: new Date() 
+        createdAt: new Date()
       };
       this.agents.set(id, agentData);
     }
@@ -291,7 +291,7 @@ export class MemStorage implements IStorage {
         category: "acknowledgment"
       },
       {
-        name: "Investigation - Looking into it", 
+        name: "Investigation - Looking into it",
         subject: "We're investigating your issue",
         content: "We're currently investigating the issue you reported. I'll update you as soon as we have more information.",
         category: "investigation"
@@ -306,16 +306,16 @@ export class MemStorage implements IStorage {
 
     for (const template of templates) {
       const id = randomUUID();
-      const templateData: Template = { 
-        ...template, 
-        id, 
+      const templateData: Template = {
+        ...template,
+        id,
         subject: template.subject || null,
         isAiGenerated: false,
-        createdAt: new Date() 
+        createdAt: new Date()
       };
       this.templates.set(id, templateData);
     }
-    
+
     // Create default admin user
     const adminId = randomUUID();
     const defaultAdmin: AdminUser = {
@@ -331,7 +331,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.adminUsers.set(adminId, defaultAdmin);
-    
+
     // Create default whitelabel config
     const whitelabelId = randomUUID();
     this.whitelabelConfig = {
@@ -350,7 +350,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     // Create default application settings
     const settings = [
       { key: "app_name", value: "SupportHub", category: "general", type: "string", description: "Application name", isPublic: true },
@@ -359,7 +359,7 @@ export class MemStorage implements IStorage {
       { key: "default_ticket_priority", value: "medium", category: "tickets", type: "string", description: "Default priority for new tickets", isPublic: false },
       { key: "enable_whatsapp", value: "false", category: "integrations", type: "boolean", description: "Enable WhatsApp integration", isPublic: false }
     ];
-    
+
     for (const setting of settings) {
       const id = randomUUID();
       const settingData: ApplicationSettings = {
@@ -374,7 +374,7 @@ export class MemStorage implements IStorage {
 
     // Add sample tickets for testing
     this.addSampleTickets();
-    
+
     // Add sample knowledge base articles
     this.addSampleKnowledgeBase();
   }
@@ -393,7 +393,7 @@ export class MemStorage implements IStorage {
         customerContact: "john.doe@example.com"
       },
       {
-        ticketNumber: "TK-002", 
+        ticketNumber: "TK-002",
         subject: "Password Reset Request",
         description: "Need help resetting my password. The reset email is not arriving.",
         status: "in-progress" as const,
@@ -432,13 +432,13 @@ export class MemStorage implements IStorage {
   async createAgent(insertAgent: InsertAgent): Promise<Agent> {
     const id = randomUUID();
     const hashedPassword = await bcrypt.hash(insertAgent.password, 10);
-    const agent: Agent = { 
-      ...insertAgent, 
-      id, 
+    const agent: Agent = {
+      ...insertAgent,
+      id,
       password: hashedPassword,
       role: insertAgent.role || "agent",
       avatar: insertAgent.avatar || null,
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.agents.set(id, agent);
     return agent;
@@ -451,12 +451,12 @@ export class MemStorage implements IStorage {
   async updateAgent(id: string, updates: Partial<Agent>): Promise<Agent | undefined> {
     const agent = this.agents.get(id);
     if (!agent) return undefined;
-    
+
     // If password is being updated, hash it
     if (updates.password) {
       updates.password = await bcrypt.hash(updates.password, 10);
     }
-    
+
     const updatedAgent = { ...agent, ...updates };
     this.agents.set(id, updatedAgent);
     return updatedAgent;
@@ -469,7 +469,7 @@ export class MemStorage implements IStorage {
   async validateAgent(email: string, password: string): Promise<Agent | null> {
     const agent = await this.getAgentByEmail(email);
     if (!agent) return null;
-    
+
     const isValid = await bcrypt.compare(password, agent.password);
     return isValid ? agent : null;
   }
@@ -502,12 +502,12 @@ export class MemStorage implements IStorage {
   async updateCustomer(id: string, updates: Partial<Customer>): Promise<Customer | undefined> {
     const customer = this.customers.get(id);
     if (!customer) return undefined;
-    
+
     // If password is being updated, hash it
     if (updates.password) {
       updates.password = await bcrypt.hash(updates.password, 10);
     }
-    
+
     const updatedCustomer = { ...customer, ...updates, updatedAt: new Date() };
     this.customers.set(id, updatedCustomer);
     return updatedCustomer;
@@ -524,7 +524,7 @@ export class MemStorage implements IStorage {
   async validateCustomer(email: string, password: string): Promise<Customer | null> {
     const customer = await this.getCustomerByEmail(email);
     if (!customer) return null;
-    
+
     const isValid = await bcrypt.compare(password, customer.password);
     return isValid ? customer : null;
   }
@@ -535,19 +535,19 @@ export class MemStorage implements IStorage {
   }
 
   async getAllTickets(): Promise<Ticket[]> {
-    return Array.from(this.tickets.values()).sort((a, b) => 
+    return Array.from(this.tickets.values()).sort((a, b) =>
       new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
     );
   }
 
   async getTicketsByAgent(agentId: string): Promise<Ticket[]> {
-    return Array.from(this.tickets.values()).filter(ticket => 
+    return Array.from(this.tickets.values()).filter(ticket =>
       ticket.assignedAgentId === agentId
     );
   }
 
   async getTicketsByStatus(status: string): Promise<Ticket[]> {
-    return Array.from(this.tickets.values()).filter(ticket => 
+    return Array.from(this.tickets.values()).filter(ticket =>
       ticket.status === status
     );
   }
@@ -555,9 +555,9 @@ export class MemStorage implements IStorage {
   async createTicket(insertTicket: InsertTicket): Promise<Ticket> {
     const id = randomUUID();
     const ticketNumber = `TK-${new Date().getFullYear()}-${String(this.ticketCounter++).padStart(3, '0')}`;
-    const ticket: Ticket = { 
-      ...insertTicket, 
-      id, 
+    const ticket: Ticket = {
+      ...insertTicket,
+      id,
       ticketNumber,
       status: insertTicket.status || "open",
       priority: insertTicket.priority || "medium",
@@ -578,7 +578,7 @@ export class MemStorage implements IStorage {
   async updateTicket(id: string, updates: Partial<Ticket>): Promise<Ticket | undefined> {
     const ticket = this.tickets.get(id);
     if (!ticket) return undefined;
-    
+
     const updatedTicket = { ...ticket, ...updates, updatedAt: new Date() };
     this.tickets.set(id, updatedTicket);
     return updatedTicket;
@@ -593,21 +593,21 @@ export class MemStorage implements IStorage {
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
     const id = randomUUID();
-    const message: Message = { 
-      ...insertMessage, 
-      id, 
+    const message: Message = {
+      ...insertMessage,
+      id,
       senderId: insertMessage.senderId || null,
       isInternal: insertMessage.isInternal ?? false,
       attachments: (insertMessage.attachments as string[]) || [],
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.messages.set(id, message);
-    
+
     // Update ticket's updatedAt timestamp
     if (insertMessage.ticketId) {
       await this.updateTicket(insertMessage.ticketId, {});
     }
-    
+
     return message;
   }
 
@@ -624,19 +624,19 @@ export class MemStorage implements IStorage {
 
   async createAttachment(insertAttachment: InsertAttachment): Promise<Attachment> {
     const id = randomUUID();
-    const attachment: Attachment = { 
-      ...insertAttachment, 
-      id, 
+    const attachment: Attachment = {
+      ...insertAttachment,
+      id,
       ticketId: insertAttachment.ticketId || null,
       messageId: insertAttachment.messageId || null,
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.attachments.set(id, attachment);
     return attachment;
   }
 
   async getAttachmentsByTicket(ticketId: string): Promise<Attachment[]> {
-    return Array.from(this.attachments.values()).filter(attachment => 
+    return Array.from(this.attachments.values()).filter(attachment =>
       attachment.ticketId === ticketId
     );
   }
@@ -648,12 +648,12 @@ export class MemStorage implements IStorage {
 
   async createTemplate(insertTemplate: InsertTemplate): Promise<Template> {
     const id = randomUUID();
-    const template: Template = { 
-      ...insertTemplate, 
-      id, 
+    const template: Template = {
+      ...insertTemplate,
+      id,
       subject: insertTemplate.subject || null,
       isAiGenerated: insertTemplate.isAiGenerated || false,
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.templates.set(id, template);
     return template;
@@ -662,7 +662,7 @@ export class MemStorage implements IStorage {
   async updateTemplate(id: string, updates: Partial<Template>): Promise<Template | undefined> {
     const template = this.templates.get(id);
     if (!template) return undefined;
-    
+
     const updatedTemplate = { ...template, ...updates };
     this.templates.set(id, updatedTemplate);
     return updatedTemplate;
@@ -679,12 +679,12 @@ export class MemStorage implements IStorage {
 
   async createAutomationRule(insertRule: InsertAutomationRule): Promise<AutomationRule> {
     const id = randomUUID();
-    const rule: AutomationRule = { 
-      ...insertRule, 
-      id, 
+    const rule: AutomationRule = {
+      ...insertRule,
+      id,
       isActive: insertRule.isActive ?? true,
       priority: insertRule.priority || 1,
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.automationRules.set(id, rule);
     return rule;
@@ -805,15 +805,15 @@ export class MemStorage implements IStorage {
 
     // Apply filters
     let filteredLogs = sampleLogs;
-    
+
     if (filters?.level) {
       filteredLogs = filteredLogs.filter(log => log.level === filters.level);
     }
-    
+
     if (filters?.action) {
       filteredLogs = filteredLogs.filter(log => log.action === filters.action);
     }
-    
+
     if (filters?.userType) {
       filteredLogs = filteredLogs.filter(log => log.userType === filters.userType);
     }
@@ -821,7 +821,7 @@ export class MemStorage implements IStorage {
     // Apply pagination
     const offset = filters?.offset || 0;
     const limit = filters?.limit || 50;
-    
+
     return filteredLogs.slice(offset, offset + limit);
   }
 
@@ -840,8 +840,8 @@ export class MemStorage implements IStorage {
 
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
     const id = randomUUID();
-    const session: ChatSession = { 
-      ...insertSession, 
+    const session: ChatSession = {
+      ...insertSession,
       id,
       isActive: insertSession.isActive ?? true,
       userAgent: insertSession.userAgent || null,
@@ -849,7 +849,7 @@ export class MemStorage implements IStorage {
       country: insertSession.country || null,
       assignedAgentId: insertSession.assignedAgentId || null,
       endedAt: insertSession.endedAt || null,
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.chatSessions.set(id, session);
     return session;
@@ -862,7 +862,7 @@ export class MemStorage implements IStorage {
   async updateChatSession(id: string, updates: Partial<ChatSession>): Promise<ChatSession | undefined> {
     const session = this.chatSessions.get(id);
     if (!session) return undefined;
-    
+
     const updatedSession = { ...session, ...updates };
     this.chatSessions.set(id, updatedSession);
     return updatedSession;
@@ -901,12 +901,12 @@ export class MemStorage implements IStorage {
   // Analytics methods
   async createAnalytics(insertAnalytics: InsertAnalytics): Promise<Analytics> {
     const id = randomUUID();
-    const analytics: Analytics = { 
-      ...insertAnalytics, 
+    const analytics: Analytics = {
+      ...insertAnalytics,
       id,
       channel: insertAnalytics.channel || null,
       agentId: insertAnalytics.agentId || null,
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.analytics.set(id, analytics);
     return analytics;
@@ -935,9 +935,9 @@ export class MemStorage implements IStorage {
   async createAdminUser(insertAdmin: InsertAdminUser): Promise<AdminUser> {
     const id = randomUUID();
     const hashedPassword = await bcrypt.hash(insertAdmin.password, 10);
-    const admin: AdminUser = { 
-      ...insertAdmin, 
-      id, 
+    const admin: AdminUser = {
+      ...insertAdmin,
+      id,
       password: hashedPassword,
       role: insertAdmin.role || "admin",
       permissions: (insertAdmin.permissions as string[]) || [],
@@ -957,7 +957,7 @@ export class MemStorage implements IStorage {
   async updateAdminUser(id: string, updates: Partial<AdminUser>): Promise<AdminUser | undefined> {
     const admin = this.adminUsers.get(id);
     if (!admin) return undefined;
-    
+
     const updatedAdmin = { ...admin, ...updates, updatedAt: new Date() };
     this.adminUsers.set(id, updatedAdmin);
     return updatedAdmin;
@@ -970,7 +970,7 @@ export class MemStorage implements IStorage {
   async validateAdminUser(email: string, password: string): Promise<AdminUser | null> {
     const admin = await this.getAdminUserByEmail(email);
     if (!admin || !admin.isActive) return null;
-    
+
     const isValid = await bcrypt.compare(password, admin.password);
     if (isValid) {
       // Update last login
@@ -987,8 +987,8 @@ export class MemStorage implements IStorage {
 
   async createWhitelabelConfig(insertConfig: InsertWhitelabelConfig): Promise<WhitelabelConfig> {
     const id = randomUUID();
-    const config: WhitelabelConfig = { 
-      ...insertConfig, 
+    const config: WhitelabelConfig = {
+      ...insertConfig,
       id,
       logoUrl: insertConfig.logoUrl || null,
       primaryColor: insertConfig.primaryColor || "#3b82f6",
@@ -1009,7 +1009,7 @@ export class MemStorage implements IStorage {
 
   async updateWhitelabelConfig(id: string, updates: Partial<WhitelabelConfig>): Promise<WhitelabelConfig | undefined> {
     if (!this.whitelabelConfig || this.whitelabelConfig.id !== id) return undefined;
-    
+
     this.whitelabelConfig = { ...this.whitelabelConfig, ...updates, updatedAt: new Date() };
     return this.whitelabelConfig;
   }
@@ -1029,8 +1029,8 @@ export class MemStorage implements IStorage {
 
   async createApplicationSetting(insertSetting: InsertApplicationSettings): Promise<ApplicationSettings> {
     const id = randomUUID();
-    const setting: ApplicationSettings = { 
-      ...insertSetting, 
+    const setting: ApplicationSettings = {
+      ...insertSetting,
       id,
       description: insertSetting.description || null,
       isPublic: insertSetting.isPublic ?? false,
@@ -1044,7 +1044,7 @@ export class MemStorage implements IStorage {
   async updateApplicationSetting(key: string, value: string, updatedBy?: string): Promise<ApplicationSettings | undefined> {
     const setting = this.applicationSettings.get(key);
     if (!setting) return undefined;
-    
+
     const updatedSetting = { ...setting, value, updatedBy: updatedBy || null, updatedAt: new Date() };
     this.applicationSettings.set(key, updatedSetting);
     return updatedSetting;
@@ -1068,7 +1068,7 @@ export class MemStorage implements IStorage {
   }
 
   async getKnowledgeBaseArticlesByCategory(category: string): Promise<KnowledgeBase[]> {
-    return Array.from(this.knowledgeBase.values()).filter(article => 
+    return Array.from(this.knowledgeBase.values()).filter(article =>
       article.category === category && article.isPublished
     );
   }
@@ -1077,21 +1077,21 @@ export class MemStorage implements IStorage {
     const searchTerm = query.toLowerCase();
     return Array.from(this.knowledgeBase.values()).filter(article => {
       if (!article.isPublished) return false;
-      
+
       const titleMatch = article.title.toLowerCase().includes(searchTerm);
       const contentMatch = article.content.toLowerCase().includes(searchTerm);
       const summaryMatch = article.summary?.toLowerCase().includes(searchTerm);
       const tagMatch = article.tags?.some(tag => tag.toLowerCase().includes(searchTerm));
-      
+
       return titleMatch || contentMatch || summaryMatch || tagMatch;
     }).sort((a, b) => {
       // Sort by relevance - title matches first, then by views
       const aTitleMatch = a.title.toLowerCase().includes(searchTerm);
       const bTitleMatch = b.title.toLowerCase().includes(searchTerm);
-      
+
       if (aTitleMatch && !bTitleMatch) return -1;
       if (!aTitleMatch && bTitleMatch) return 1;
-      
+
       return (b.views || 0) - (a.views || 0);
     });
   }
@@ -1120,11 +1120,11 @@ export class MemStorage implements IStorage {
   async updateKnowledgeBaseArticle(id: string, updates: Partial<KnowledgeBase>): Promise<KnowledgeBase | undefined> {
     const article = this.knowledgeBase.get(id);
     if (!article) return undefined;
-    
-    const updatedArticle = { 
-      ...article, 
-      ...updates, 
-      updatedAt: new Date() 
+
+    const updatedArticle = {
+      ...article,
+      ...updates,
+      updatedAt: new Date()
     };
     this.knowledgeBase.set(id, updatedArticle);
     return updatedArticle;
@@ -1270,7 +1270,7 @@ Ready to begin? Let's get started!`,
     for (const article of sampleArticles) {
       await this.createKnowledgeBaseArticle(article);
     }
-    
+
     // Initialize sample channels
     await this.initializeSampleChannels();
   }
@@ -1304,7 +1304,7 @@ Ready to begin? Let's get started!`,
         },
         {
           name: "WhatsApp Business",
-          type: "whatsapp", 
+          type: "whatsapp",
           status: "disconnected",
           config: {
             access_token: "",
@@ -1325,7 +1325,7 @@ Ready to begin? Let's get started!`,
           updatedAt: new Date()
         }
       ];
-      
+
       for (const channelData of sampleChannels) {
         await this.createChannel(channelData);
       }
@@ -1363,9 +1363,9 @@ Ready to begin? Let's get started!`,
     if (!channel) {
       return undefined;
     }
-    
-    const updatedChannel = { 
-      ...channel, 
+
+    const updatedChannel = {
+      ...channel,
       ...updates,
       updatedAt: new Date()
     };
@@ -1388,8 +1388,8 @@ Ready to begin? Let's get started!`,
   async toggleChannelOnlineStatus(id: string, isActive: boolean): Promise<ChannelConfig | undefined> {
     const channel = this.channels.get(id);
     if (channel) {
-      const updatedChannel = { 
-        ...channel, 
+      const updatedChannel = {
+        ...channel,
         isActive,
         isOnline: isActive, // Set online status to match active status
         updatedAt: new Date()
@@ -1529,9 +1529,14 @@ Ready to begin? Let's get started!`,
 import { PostgresStorage } from './postgres-storage';
 
 // Initialize storage with fallback handling
+// Initialize storage with fallback handling
 function createStorage(): IStorage {
-  // For now, always use MemStorage to avoid Neon.tech dependency issues
-  // PostgreSQL integration can be enabled later with proper pg driver
+  if (process.env.DATABASE_URL) {
+    console.log('✓ Using PostgreSQL storage');
+    return new PostgresStorage();
+  }
+
+  // Only use MemStorage if no database URL is provided
   console.log('✓ Using in-memory storage (MemStorage)');
   return new MemStorage();
 }

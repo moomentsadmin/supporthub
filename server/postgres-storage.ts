@@ -1,5 +1,6 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
+const { Pool } = pg;
 import { eq, desc, and, or, like, ilike, gte, lte } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
@@ -59,7 +60,8 @@ import {
 import { IStorage } from './storage';
 
 // Channel configuration interface
-interface ChannelConfig {
+// Channel configuration interface
+interface LegacyChannelConfig {
   id: string;
   name: string;
   type: "email" | "whatsapp" | "twitter" | "facebook";
@@ -83,8 +85,10 @@ export class PostgresStorage implements IStorage {
     }
 
     try {
-      const sql = neon(process.env.DATABASE_URL);
-      this.db = drizzle(sql);
+      const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+      });
+      this.db = drizzle(pool);
     } catch (error) {
       console.error('Failed to initialize database connection:', error);
       this.db = null;
@@ -607,142 +611,14 @@ export class PostgresStorage implements IStorage {
       .orderBy(messages.createdAt);
   }
 
-  async getAuditLogs(filters?: {
-    limit?: number;
-    offset?: number;
-    level?: string;
-    action?: string;
-    userType?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<AuditLog[]> {
-    await this.initialize();
-
-    try {
-      let query = this.db.select().from(auditLogs);
-
-      // Apply filters
-      const conditions = [];
-      if (filters?.level) {
-        conditions.push(eq(auditLogs.level, filters.level));
-      }
-      if (filters?.action) {
-        conditions.push(eq(auditLogs.action, filters.action));
-      }
-      if (filters?.userType) {
-        conditions.push(eq(auditLogs.userType, filters.userType));
-      }
-
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions));
-      }
-
-      // Apply pagination and ordering
-      query = query
-        .orderBy(desc(auditLogs.createdAt))
-        .limit(filters?.limit || 50)
-        .offset(filters?.offset || 0);
-
-      return await query;
-    } catch (error) {
-      console.log('Database audit logs not available, using fallback');
-      // Fallback to sample data if table doesn't exist
-      return await this.getFallbackAuditLogs(filters);
-    }
+  async createChatMessage(message: any): Promise<any> {
+    console.log('createChatMessage called (not implemented in postgres-storage yet)');
+    const id = randomUUID();
+    return { ...message, id, createdAt: new Date() };
   }
 
-  private async getFallbackAuditLogs(filters?: any): Promise<AuditLog[]> {
-    // Generate sample audit logs as fallback
-    const sampleLogs: AuditLog[] = [
-      {
-        id: 'log-1',
-        level: "info",
-        action: "login",
-        entity: "admin",
-        entityId: "admin-1",
-        userId: "admin-1",
-        userType: "admin",
-        userName: "System Administrator",
-        userEmail: "admin@supporthub.com",
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        sessionId: "sess_123",
-        description: "Administrator logged into the admin panel",
-        metadata: { loginMethod: "password" },
-        success: true,
-        errorMessage: null,
-        duration: 150,
-        createdAt: new Date(Date.now() - 3600000),
-      },
-      {
-        id: 'log-2',
-        level: "info",
-        action: "create_ticket",
-        entity: "ticket",
-        entityId: "ticket-456",
-        userId: "agent-1",
-        userType: "agent",
-        userName: "John Agent",
-        userEmail: "john@company.com",
-        ipAddress: "192.168.1.101",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        sessionId: "sess_456",
-        description: "Created new support ticket for customer inquiry",
-        metadata: { ticketPriority: "medium", channel: "email" },
-        success: true,
-        errorMessage: null,
-        duration: 320,
-        createdAt: new Date(Date.now() - 7200000),
-      },
-      {
-        id: 'log-3',
-        level: "warn",
-        action: "failed_login",
-        entity: "agent",
-        entityId: null,
-        userId: null,
-        userType: "agent",
-        userName: null,
-        userEmail: "unknown@company.com",
-        ipAddress: "192.168.1.105",
-        userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-        sessionId: null,
-        description: "Failed login attempt with invalid credentials",
-        metadata: { attemptedEmail: "unknown@company.com", reason: "invalid_password" },
-        success: false,
-        errorMessage: "Invalid email or password",
-        duration: 500,
-        createdAt: new Date(Date.now() - 10800000),
-      }
-    ];
 
-    // Apply basic filtering
-    let filteredLogs = sampleLogs;
-    if (filters?.level) {
-      filteredLogs = filteredLogs.filter(log => log.level === filters.level);
-    }
 
-    const offset = filters?.offset || 0;
-    const limit = filters?.limit || 50;
-    return filteredLogs.slice(offset, offset + limit);
-  }
-
-  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
-    await this.initialize();
-
-    try {
-      const result = await this.db.insert(auditLogs).values(log).returning();
-      return result[0];
-    } catch (error) {
-      console.log('Could not create audit log in database, skipping');
-      // Return a mock response if database is not available
-      return {
-        id: 'mock-' + Date.now(),
-        ...log,
-        createdAt: new Date(),
-      };
-    }
-  }
 
   // Ticket forwarding
   async forwardTicket(forward: InsertTicketForward): Promise<TicketForward> {
@@ -920,33 +796,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Channel management (keeping in memory for now)
-  async getChannels(): Promise<ChannelConfig[]> {
-    return Array.from(this.channels.values());
-  }
 
-  async createChannel(channel: Omit<ChannelConfig, 'id'>): Promise<ChannelConfig> {
-    const id = randomUUID();
-    const newChannel: ChannelConfig = { ...channel, id };
-    this.channels.set(id, newChannel);
-    return newChannel;
-  }
-
-  async updateChannel(id: string, updates: Partial<ChannelConfig>): Promise<ChannelConfig | undefined> {
-    const channel = this.channels.get(id);
-    if (!channel) return undefined;
-
-    const updatedChannel = { ...channel, ...updates };
-    this.channels.set(id, updatedChannel);
-    return updatedChannel;
-  }
-
-  async getChannel(id: string): Promise<ChannelConfig | undefined> {
-    return this.channels.get(id);
-  }
-
-  async deleteChannel(id: string): Promise<boolean> {
-    return this.channels.delete(id);
-  }
 
   // Knowledge Base
   async getKnowledgeBaseArticle(id: string): Promise<KnowledgeBase | undefined> {
@@ -1091,63 +941,34 @@ export class PostgresStorage implements IStorage {
       .where(and(eq(channelConfigs.type, type), eq(channelConfigs.isActive, true)));
   }
 
-  // Legacy channel management methods - already exist, need to update to use database
-  async getChannels(): Promise<LegacyChannelConfig[]> {
-    const configs = await this.getAllChannelConfigs();
-    return configs.map(config => ({
-      id: config.id,
-      name: config.name,
-      type: config.type as "email" | "whatsapp" | "twitter" | "facebook",
-      status: config.status as "connected" | "disconnected" | "error",
-      config: config.config,
-      lastSync: config.lastSync
-    }));
+  // Channel management methods matching IStorage interface
+  async getChannels(): Promise<ChannelConfig[]> {
+    if (!this.checkDatabaseAvailability()) return [];
+    await this.initialize();
+    return await this.db.select().from(channelConfigs);
   }
 
-  async createChannel(channel: Omit<LegacyChannelConfig, 'id'>): Promise<LegacyChannelConfig> {
-    const config: InsertChannelConfig = {
-      name: channel.name,
-      type: channel.type,
-      status: channel.status || 'disconnected',
-      config: channel.config,
-      lastSync: channel.lastSync,
-      isActive: true
-    };
-    const created = await this.createChannelConfig(config);
-    return {
-      id: created.id,
-      name: created.name,
-      type: created.type as "email" | "whatsapp" | "twitter" | "facebook",
-      status: created.status as "connected" | "disconnected" | "error",
-      config: created.config,
-      lastSync: created.lastSync
-    };
+  async createChannel(channel: InsertChannelConfig): Promise<ChannelConfig> {
+    await this.initialize();
+    const result = await this.db.insert(channelConfigs).values(channel).returning();
+    return result[0];
   }
 
-  async updateChannel(id: string, updates: Partial<LegacyChannelConfig>): Promise<LegacyChannelConfig | undefined> {
-    const updated = await this.updateChannelConfig(id, updates);
-    if (!updated) return undefined;
-    return {
-      id: updated.id,
-      name: updated.name,
-      type: updated.type as "email" | "whatsapp" | "twitter" | "facebook",
-      status: updated.status as "connected" | "disconnected" | "error",
-      config: updated.config,
-      lastSync: updated.lastSync
-    };
+  async updateChannel(id: string, updates: Partial<ChannelConfig>): Promise<ChannelConfig | undefined> {
+    if (!this.checkDatabaseAvailability()) return undefined;
+    await this.initialize();
+    const result = await this.db.update(channelConfigs)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(channelConfigs.id, id))
+      .returning();
+    return result[0];
   }
 
-  async getChannel(id: string): Promise<LegacyChannelConfig | undefined> {
-    const config = await this.getChannelConfig(id);
-    if (!config) return undefined;
-    return {
-      id: config.id,
-      name: config.name,
-      type: config.type as "email" | "whatsapp" | "twitter" | "facebook",
-      status: config.status as "connected" | "disconnected" | "error",
-      config: config.config,
-      lastSync: config.lastSync
-    };
+  async getChannel(id: string): Promise<ChannelConfig | undefined> {
+    if (!this.checkDatabaseAvailability()) return undefined;
+    await this.initialize();
+    const result = await this.db.select().from(channelConfigs).where(eq(channelConfigs.id, id));
+    return result[0];
   }
 
   async deleteChannel(id: string): Promise<boolean> {
