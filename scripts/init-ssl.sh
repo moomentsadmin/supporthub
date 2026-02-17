@@ -63,28 +63,32 @@ done
 # Request Let's Encrypt certificate
 echo -e "${GREEN}Requesting Let's Encrypt certificate...${NC}\n"
 
-certbot certonly \
-    --webroot \
-    --webroot-path=/var/www/certbot \
-    --email "$EMAIL" \
-    --agree-tos \
-    --no-eff-email \
-    --force-renewal \
-    --cert-name "$DOMAIN" \
-    -d "$DOMAIN" \
-    -d "www.$DOMAIN" && {
-        echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully!${NC}\n"
-        
-        # Copy certificates to nginx ssl directory
-        cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem
-        cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem
-        
-        echo -e "${GREEN}✅ Certificates installed${NC}"
-        echo -e "${GREEN}✅ SSL setup complete!${NC}"
-        echo -e "${GREEN}🔒 Your site is now accessible at: https://${DOMAIN}${NC}\n"
-        
-        exit 0
-    } || {
+# Function to request certificate
+request_cert() {
+    local domains="$1"
+    echo -e "${GREEN}Attempting to obtain certificate for: $domains${NC}"
+    
+    certbot certonly \
+        --webroot \
+        --webroot-path=/var/www/certbot \
+        --email "$EMAIL" \
+        --agree-tos \
+        --no-eff-email \
+        --force-renewal \
+        --cert-name "$DOMAIN" \
+        $domains
+}
+
+# Try both root and www domains first
+if request_cert "-d $DOMAIN -d www.$DOMAIN"; then
+    echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully for $DOMAIN and www.$DOMAIN!${NC}\n"
+else
+    echo -e "${YELLOW}⚠️  Failed to obtain certificate for both domains. Retrying with root domain only...${NC}"
+    
+    # Retry with only root domain
+    if request_cert "-d $DOMAIN"; then
+        echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully for $DOMAIN!${NC}\n"
+    else
         echo -e "${RED}❌ Failed to obtain Let's Encrypt certificate${NC}"
         echo -e "${YELLOW}Using self-signed certificate as fallback${NC}\n"
         
@@ -101,7 +105,18 @@ certbot certonly \
         echo -e "${YELLOW}    - Rate limit reached (5 certs/week per domain)${NC}\n"
         
         exit 0
-    }
+    fi
+fi
+
+# Copy certificates to nginx ssl directory
+cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/nginx/ssl/cert.pem
+cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/nginx/ssl/key.pem
+
+echo -e "${GREEN}✅ Certificates installed${NC}"
+echo -e "${GREEN}✅ SSL setup complete!${NC}"
+echo -e "${GREEN}🔒 Your site is now accessible at: https://${DOMAIN}${NC}\n"
+
+exit 0
 
 echo -e "${GREEN}✅ SSL initialization completed${NC}"
 exit 0
