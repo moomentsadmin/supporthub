@@ -30,6 +30,20 @@ else
     echo "✅ Certificates already exist"
 fi
 
+echo "🔄 Applying environment variables to Nginx config..."
+# We need to install gettext for envsubst if it's not there, but nginx:alpine usually has it or we can sed.
+# simpler to use sed given restricted environment? No, envsubst is cleaner.
+# Check if envsubst is available
+if ! command -v envsubst >/dev/null 2>&1; then
+    apk add --no-cache gettext
+fi
+
+# Replace vars in conf.d
+for file in /etc/nginx/conf.d/*.conf; do
+    echo "Processing $file..."
+    envsubst '${DOMAIN}' < "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+done
+
 echo "🚀 Starting Nginx..."
 
 # Start Nginx with the original entrypoint

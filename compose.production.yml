@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   db:
@@ -17,7 +15,7 @@ services:
     networks:
       - supporthub_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-supporthub}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-supporthub}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -47,7 +45,7 @@ services:
     networks:
       - supporthub_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -68,13 +66,13 @@ services:
       - nginx_ssl:/etc/nginx/ssl
       - certbot_www:/var/www/certbot
       - certbot_conf:/etc/letsencrypt
-    entrypoint: ["/bin/sh", "/nginx-entrypoint.sh"]
+    entrypoint: [ "/bin/sh", "/nginx-entrypoint.sh" ]
     depends_on:
       - app
     networks:
       - supporthub_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/health", "||", "exit", "1"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/health", "||", "exit", "1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -93,7 +91,7 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
       EMAIL: ${EMAIL}
-    entrypoint: ["/bin/sh", "/init-ssl.sh"]
+    entrypoint: [ "/bin/sh", "/init-ssl.sh" ]
     depends_on:
       - nginx
     networks:

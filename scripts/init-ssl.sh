@@ -79,33 +79,26 @@ request_cert() {
         $domains
 }
 
-# Try both root and www domains first
-if request_cert "-d $DOMAIN -d www.$DOMAIN"; then
-    echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully for $DOMAIN and www.$DOMAIN!${NC}\n"
+# Request certificate for the specified domain only
+if request_cert "-d $DOMAIN"; then
+    echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully for $DOMAIN!${NC}\n"
 else
-    echo -e "${YELLOW}⚠️  Failed to obtain certificate for both domains. Retrying with root domain only...${NC}"
+    echo -e "${RED}❌ Failed to obtain Let's Encrypt certificate${NC}"
+    echo -e "${YELLOW}Using self-signed certificate as fallback${NC}\n"
     
-    # Retry with only root domain
-    if request_cert "-d $DOMAIN"; then
-        echo -e "${GREEN}✅ Let's Encrypt certificate obtained successfully for $DOMAIN!${NC}\n"
-    else
-        echo -e "${RED}❌ Failed to obtain Let's Encrypt certificate${NC}"
-        echo -e "${YELLOW}Using self-signed certificate as fallback${NC}\n"
-        
-        # Create self-signed as fallback
-        openssl req -x509 -nodes -days 90 -newkey rsa:2048 \
-            -keyout /etc/nginx/ssl/key.pem \
-            -out /etc/nginx/ssl/cert.pem \
-            -subj "/CN=$DOMAIN" 2>/dev/null
-        
-        echo -e "${YELLOW}⚠️  Self-signed certificate created${NC}"
-        echo -e "${YELLOW}⚠️  Common reasons for Let's Encrypt failure:${NC}"
-        echo -e "${YELLOW}    - Domain not pointing to this server${NC}"
-        echo -e "${YELLOW}    - Ports 80/443 not accessible from internet${NC}"
-        echo -e "${YELLOW}    - Rate limit reached (5 certs/week per domain)${NC}\n"
-        
-        exit 0
-    fi
+    # Create self-signed as fallback
+    openssl req -x509 -nodes -days 90 -newkey rsa:2048 \
+        -keyout /etc/nginx/ssl/key.pem \
+        -out /etc/nginx/ssl/cert.pem \
+        -subj "/CN=$DOMAIN" 2>/dev/null
+    
+    echo -e "${YELLOW}⚠️  Self-signed certificate created${NC}"
+    echo -e "${YELLOW}⚠️  Common reasons for Let's Encrypt failure:${NC}"
+    echo -e "${YELLOW}    - Domain not pointing to this server${NC}"
+    echo -e "${YELLOW}    - Ports 80/443 not accessible from internet${NC}"
+    echo -e "${YELLOW}    - Rate limit reached (5 certs/week per domain)${NC}\n"
+    
+    exit 0
 fi
 
 # Copy certificates to nginx ssl directory
@@ -118,5 +111,4 @@ echo -e "${GREEN}🔒 Your site is now accessible at: https://${DOMAIN}${NC}\n"
 
 exit 0
 
-echo -e "${GREEN}✅ SSL initialization completed${NC}"
-exit 0
+

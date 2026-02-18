@@ -49,7 +49,7 @@ fi
 echo -e "${GREEN}Deploying with Docker Compose...${NC}"
 
 # Rebuild app and nginx, and force verify SSL
-docker compose -f compose.production.yml up -d --build --force-recreate
+docker compose -f compose.production.yml up -d --build
 
 echo -e "${GREEN}Deployment started. Waiting for SSL initialization...${NC}"
 
