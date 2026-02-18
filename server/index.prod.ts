@@ -9,6 +9,9 @@ import { registerCustomerRoutes } from "./customer-routes";
 import { log } from "./logger";
 import { serveStatic } from "./static";
 import { validateDatabaseConnection } from "./db";
+import { getStorage } from "./storage";
+import { createAgentRoutes } from "./agent-routes";
+import { getEmailPoller } from "./email-poller";
 
 const app = express();
 app.use(express.json());
@@ -102,24 +105,27 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
   registerExtendedRoutes(app, server);
-  
-  const { getStorage } = await import('./storage');
+
+  // Removed dynamic import of storage
+
   const adminRoutes = createAdminRoutes(getStorage());
   app.use('/api/admin', adminRoutes);
-  
-  const { createAgentRoutes } = await import('./agent-routes');
+
+  // Removed dynamic import of agent-routes
+
   const agentRoutes = createAgentRoutes(getStorage());
   app.use('/api/agent', agentRoutes);
-  
+
   registerCustomerRoutes(app);
 
-  const { getEmailPoller } = await import('./email-poller');
+  // Removed dynamic import of email-poller
+
   setTimeout(async () => {
     try {
       const storage = getStorage();
       const emailPoller = getEmailPoller(storage);
       const channels = await storage.getAllChannelConfigs();
-      
+
       for (const channel of channels) {
         if (channel.type === 'email' && channel.isActive && channel.pollingConfig?.enabled) {
           console.log(`Starting email polling for channel: ${channel.name}`);
