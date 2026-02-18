@@ -10,6 +10,13 @@ export interface ObjectAclPolicy {
   visibility: "public" | "private";
 }
 
+export class ObjectNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ObjectNotFoundError";
+  }
+}
+
 export enum ObjectPermission {
   READ = "read",
   WRITE = "write",
