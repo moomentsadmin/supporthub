@@ -75,6 +75,7 @@ request_cert() {
         --agree-tos \
         --no-eff-email \
         --force-renewal \
+        --non-interactive \
         --cert-name "$DOMAIN" \
         $domains
 }
