@@ -17,8 +17,9 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# Load environment variables just to check DOMAIN
-export $(grep -v '^#' .env | xargs)
+# Load DOMAIN and EMAIL from .env (robustly)
+DOMAIN=$(grep -E "^DOMAIN=" .env | cut -d '=' -f2 | tr -d '\r' | tr -d '"' | tr -d "'")
+EMAIL=$(grep -E "^EMAIL=" .env | cut -d '=' -f2 | tr -d '\r' | tr -d '"' | tr -d "'")
 
 # Check DOMAIN variable
 if [ -z "$DOMAIN" ]; then
