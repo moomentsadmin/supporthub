@@ -39,9 +39,23 @@ if ! command -v envsubst >/dev/null 2>&1; then
 fi
 
 # Replace vars in conf.d
+# First clean up default configs to avoid conflicts
+rm -rf /etc/nginx/conf.d/*
+
+# Copy templates to conf.d (writable location)
+# We assume templates are mounted at /etc/nginx/templates/conf.d
+if [ -d "/etc/nginx/templates/conf.d" ]; then
+    cp /etc/nginx/templates/conf.d/*.conf /etc/nginx/conf.d/
+else
+    # Fallback if mounted directly (though this causes RO issues, addressed via compose change)
+    echo "Warning: Templates not found at expected location"
+fi
+
 for file in /etc/nginx/conf.d/*.conf; do
-    echo "Processing $file..."
-    envsubst '${DOMAIN}' < "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    if [ -f "$file" ]; then
+        echo "Processing $file..."
+        envsubst '${DOMAIN}' < "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    fi
 done
 
 echo "🚀 Starting Nginx..."
