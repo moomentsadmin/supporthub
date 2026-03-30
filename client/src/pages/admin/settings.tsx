@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,19 @@ import { EmailProviderSettings } from "@/components/email-provider-settings";
 import AdminLayout from "@/components/admin-layout";
 import WhitelabelConfigForm from "@/components/whitelabel-config";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { WhitelabelConfig } from "@shared/schema";
 
 export default function AdminSettings() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Local optimistic toggle state
+  const [chatEnabled, setChatEnabled] = useState<boolean | null>(null);
+  const [phoneEnabled, setPhoneEnabled] = useState<boolean | null>(null);
 
   const { data: settings = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/settings"]
@@ -28,12 +34,67 @@ export default function AdminSettings() {
     queryKey: ["/api/admin/whitelabel"]
   });
 
-  // Get feature settings specifically
+  // Sync local state from server data (only on first load / when null)
   const chatSetting = settings.find((s: any) => s.key === 'enable_chat');
-  const isChatEnabled = chatSetting?.value === 'true';
-  
   const phoneNumberSetting = settings.find((s: any) => s.key === 'enable_phone_numbers');
-  const isPhoneNumberEnabled = phoneNumberSetting?.value === 'true';
+
+  useEffect(() => {
+    if (chatSetting && chatEnabled === null) {
+      setChatEnabled(chatSetting.value === 'true');
+    }
+  }, [chatSetting]);
+
+  useEffect(() => {
+    if (phoneNumberSetting && phoneEnabled === null) {
+      setPhoneEnabled(phoneNumberSetting.value === 'true');
+    }
+  }, [phoneNumberSetting]);
+
+  // Mutation to update a setting via API
+  const updateSetting = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const res = await apiRequest("PUT", `/api/admin/settings/${key}`, { value });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+    },
+    onError: (err: Error, variables) => {
+      // Revert optimistic state on failure
+      if (variables.key === 'enable_chat') {
+        setChatEnabled(prev => !prev);
+      } else if (variables.key === 'enable_phone_numbers') {
+        setPhoneEnabled(prev => !prev);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update setting. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleChatToggle = (checked: boolean) => {
+    setChatEnabled(checked); // optimistic update
+    updateSetting.mutate({ key: 'enable_chat', value: String(checked) });
+    toast({
+      title: checked ? "Live Chat Enabled" : "Live Chat Disabled",
+      description: `Live chat widget has been ${checked ? 'enabled' : 'disabled'}.`,
+    });
+  };
+
+  const handlePhoneToggle = (checked: boolean) => {
+    setPhoneEnabled(checked); // optimistic update
+    updateSetting.mutate({ key: 'enable_phone_numbers', value: String(checked) });
+    toast({
+      title: checked ? "Phone Collection Enabled" : "Phone Collection Disabled",
+      description: `Phone number collection has been ${checked ? 'enabled' : 'disabled'}.`,
+    });
+  };
+
+  // Resolved values: use local state if set, else derive from server
+  const isChatEnabled = chatEnabled !== null ? chatEnabled : (chatSetting?.value === 'true');
+  const isPhoneNumberEnabled = phoneEnabled !== null ? phoneEnabled : (phoneNumberSetting?.value === 'true');
 
   // Filter settings based on search and category
   const filteredSettings = settings.filter((setting: any) => {
@@ -109,72 +170,76 @@ export default function AdminSettings() {
             <span>Feature Management</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 shadow-sm ${
-            isChatEnabled 
-              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20' 
-              : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+        <CardContent className="space-y-3">
+
+          {/* Live Chat Widget */}
+          <div className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${
+            isChatEnabled
+              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/20'
+              : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50'
           }`}>
             <div className="flex items-center space-x-3">
-              <MessageCircle className={`w-5 h-5 transition-colors duration-200 ${
-                isChatEnabled ? 'text-emerald-600' : 'text-gray-400'
-              }`} />
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                isChatEnabled ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-gray-200 dark:bg-gray-700'
+              }`}>
+                <MessageCircle className={`w-4 h-4 ${isChatEnabled ? 'text-emerald-600' : 'text-gray-400'}`} />
+              </div>
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">Live Chat Widget</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Enable customer chat widget on your website
-                </p>
+                <h4 className="font-medium text-gray-900 dark:text-white text-sm">Live Chat Widget</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Enable customer chat widget on your website</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-xs font-semibold uppercase tracking-wide ${isChatEnabled ? 'text-emerald-700' : 'text-gray-500'}`}>
-                {isChatEnabled ? 'On' : 'Off'}
+              <span className={`text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                isChatEnabled
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
+                  : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+              }`}>
+                {isChatEnabled ? 'Enabled' : 'Disabled'}
               </span>
               <Switch
-                className="h-8 w-16 data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-gray-200"
                 checked={isChatEnabled}
-                onCheckedChange={(checked) => {
-                  toast({
-                    title: `Chat ${checked ? 'enabled' : 'disabled'}`,
-                    description: `Live chat widget has been ${checked ? 'enabled' : 'disabled'}`,
-                  });
-                }}
+                onCheckedChange={handleChatToggle}
+                disabled={updateSetting.isPending}
+                className="data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-gray-300"
               />
             </div>
           </div>
 
-          <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 shadow-sm ${
-            isPhoneNumberEnabled 
-              ? 'border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20' 
-              : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+          {/* Phone Number Collection */}
+          <div className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${
+            isPhoneNumberEnabled
+              ? 'border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20'
+              : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50'
           }`}>
             <div className="flex items-center space-x-3">
-              <Phone className={`w-5 h-5 transition-colors duration-200 ${
-                isPhoneNumberEnabled ? 'text-blue-600' : 'text-gray-400'
-              }`} />
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                isPhoneNumberEnabled ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-gray-200 dark:bg-gray-700'
+              }`}>
+                <Phone className={`w-4 h-4 ${isPhoneNumberEnabled ? 'text-blue-600' : 'text-gray-400'}`} />
+              </div>
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">Phone Number Collection</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Collect phone numbers in ticket forms
-                </p>
+                <h4 className="font-medium text-gray-900 dark:text-white text-sm">Phone Number Collection</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Collect phone numbers in ticket forms</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-xs font-semibold uppercase tracking-wide ${isPhoneNumberEnabled ? 'text-blue-700' : 'text-gray-500'}`}>
-                {isPhoneNumberEnabled ? 'On' : 'Off'}
+              <span className={`text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                isPhoneNumberEnabled
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400'
+                  : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+              }`}>
+                {isPhoneNumberEnabled ? 'Enabled' : 'Disabled'}
               </span>
               <Switch
-                className="h-8 w-16 data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-200"
                 checked={isPhoneNumberEnabled}
-                onCheckedChange={(checked) => {
-                  toast({
-                    title: `Phone collection ${checked ? 'enabled' : 'disabled'}`,
-                    description: `Phone number collection has been ${checked ? 'enabled' : 'disabled'}`,
-                  });
-                }}
+                onCheckedChange={handlePhoneToggle}
+                disabled={updateSetting.isPending}
+                className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300"
               />
             </div>
           </div>
+
         </CardContent>
       </Card>
 

@@ -23,7 +23,7 @@ This document outlines the security features implemented in SupportHub and best 
 **Critical**: Change these default credentials in production:
 ```
 Admin: admin@supporthub.com / admin123
-Agent: agent@supporthub.com / password123
+Agent: agent@supporthub.com / agent123
 ```
 
 ### Role-Based Access Control (RBAC)

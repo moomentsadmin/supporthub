@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import Header from "@/components/header";
-import Sidebar from "@/components/sidebar";
+import { AgentLayout } from "@/components/agent-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,24 +69,16 @@ export default function AgentTicketDetail() {
   const [sendEmail, setSendEmail] = useState(true);
   const { showSuccess, showError, triggerButtonFeedback, buttonStates, toasts } = useMicroInteractions();
 
-  // Ensure we have a valid ticketId before proceeding
   if (!ticketId) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
-        <div className="flex pt-16">
-          <Sidebar />
-          <main className="flex-1 ml-64 p-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Invalid Ticket ID</h1>
-              <Button onClick={() => setLocation("/agents/tickets")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Tickets
-              </Button>
-            </div>
-          </main>
+      <AgentLayout title="Error">
+        <div className="text-center py-16">
+          <h1 className="text-xl font-bold text-foreground mb-4">Invalid Ticket ID</h1>
+          <Button onClick={() => setLocation("/agents/tickets")} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />Back to Tickets
+          </Button>
         </div>
-      </div>
+      </AgentLayout>
     );
   }
 
@@ -188,85 +179,53 @@ export default function AgentTicketDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
-        <div className="flex pt-16">
-          <Sidebar />
-          <main className="flex-1 ml-64 p-6">
-            <div className="flex items-center justify-center h-96">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p>Loading ticket {ticketId}...</p>
-              </div>
-            </div>
-          </main>
+      <AgentLayout title={`Ticket #${ticketId}`}>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center text-muted-foreground">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-sm">Loading ticket…</p>
+          </div>
         </div>
-      </div>
+      </AgentLayout>
     );
   }
 
   if (error) {
-    console.error("Error loading ticket:", error);
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
-        <div className="flex pt-16">
-          <Sidebar />
-          <main className="flex-1 ml-64 p-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Error Loading Ticket</h1>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {error instanceof Error ? error.message : "Failed to load ticket"}
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button onClick={() => window.location.reload()}>
-                  Reload Page
-                </Button>
-                <Button variant="secondary" onClick={() => setLocation("/agents/tickets")}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Tickets
-                </Button>
-              </div>
-            </div>
-          </main>
+      <AgentLayout title="Error">
+        <div className="text-center py-16">
+          <h1 className="text-xl font-bold text-foreground mb-2">Error Loading Ticket</h1>
+          <p className="text-sm text-muted-foreground mb-4">{error instanceof Error ? error.message : "Failed to load ticket"}</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => window.location.reload()}>Reload</Button>
+            <Button variant="secondary" onClick={() => setLocation("/agents/tickets")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />Back
+            </Button>
+          </div>
         </div>
-      </div>
+      </AgentLayout>
     );
   }
 
   if (!ticket) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
-        <div className="flex pt-16">
-          <Sidebar />
-          <main className="flex-1 ml-64 p-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Ticket Not Found</h1>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Ticket ID: {ticketId}
-              </p>
-              <Button onClick={() => setLocation("/agents/tickets")}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Tickets
-              </Button>
-            </div>
-          </main>
+      <AgentLayout title="Not Found">
+        <div className="text-center py-16">
+          <h1 className="text-xl font-bold text-foreground mb-2">Ticket Not Found</h1>
+          <p className="text-sm text-muted-foreground mb-4">Ticket ID: {ticketId}</p>
+          <Button variant="outline" onClick={() => setLocation("/agents/tickets")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />Back to Tickets
+          </Button>
         </div>
-      </div>
+      </AgentLayout>
     );
   }
 
   const ChannelIcon = channelIcons[ticket.channel as keyof typeof channelIcons] || Mail;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      
-      <div className="flex pt-16">
-        <Sidebar />
-        
-        <main className="flex-1 ml-64 p-6">
+    <>
+      <AgentLayout title={`Ticket #${ticket.ticketNumber || ticket.id}`}>
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
@@ -460,11 +419,8 @@ export default function AgentTicketDetail() {
               </Card>
             </div>
           </div>
-        </main>
-      </div>
-      
-      {/* Toast Notifications */}
+      </AgentLayout>
       <ToastContainer toasts={toasts} />
-    </div>
+    </>
   );
 }

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import Header from "@/components/header";
-import Sidebar from "@/components/sidebar";
+import { AgentLayout } from "@/components/agent-layout";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,44 +66,8 @@ export default function AgentMyTickets() {
     setLocation(`/agents/tickets/${ticket.id}`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
-        <div className="flex pt-16">
-          <Sidebar />
-          <main className="flex-1 ml-64 p-6">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-              <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      
-      <div className="flex pt-16">
-        <Sidebar />
-        
-        <main className="flex-1 ml-64 p-6">
-          {/* Header */}
-          <div className="mb-6 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  My Tickets
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Tickets assigned to you (<AnimatedCounter value={myTickets.length} />)
-                </p>
-              </div>
-            </div>
-          </div>
+    <AgentLayout title="My Tickets" subtitle={`${myTickets.length} ticket${myTickets.length !== 1 ? 's' : ''} assigned to you`}>
 
           {/* Filters */}
           <Card className="mb-6 hover-lift">
@@ -210,7 +173,7 @@ export default function AgentMyTickets() {
                           </div>
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
-                            <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                            <span>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : "Unknown"}</span>
                           </div>
                         </div>
                       </div>
@@ -239,8 +202,6 @@ export default function AgentMyTickets() {
               ))
             )}
           </div>
-        </main>
-      </div>
-    </div>
+    </AgentLayout>
   );
 }

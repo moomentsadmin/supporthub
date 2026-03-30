@@ -3,7 +3,7 @@ FROM node:20-slim
 WORKDIR /app
 
 # Install openssl (needed for some node cryptos or database connections)
-RUN apt-get update && apt-get install -y openssl procps
+RUN apt-get update && apt-get install -y openssl procps curl
 
 # Create app user
 RUN groupadd -g 1001 nodejs && \

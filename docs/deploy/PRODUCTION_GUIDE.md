@@ -1,170 +1,358 @@
-# Production Deployment Guide (Ubuntu/Docker)
+# Production Deployment Guide
 
-This guide covers deploying SupportHub on an Ubuntu server using Docker and Docker Compose. It supports internal (containerized) and external databases/storage services.
+This guide covers deploying SupportHub on a Linux server using Docker and Docker Compose.
 
-## prerequisites
+---
 
--   **Server**: Ubuntu 20.04/22.04 LTS (Recommended: 2 vCPU, 4GB RAM).
--   **Software**:
-    -   Docker Engine (latest)
-    -   Docker Compose V2 (`docker compose` command)
-    -   Git
+## ⚠️ Database Compatibility Notice
 
-## 1. Quick Start (All-in-One)
+> **SupportHub requires PostgreSQL 14+.**  
+> **MySQL and MariaDB are NOT supported.** The application uses Drizzle ORM (PostgreSQL dialect), the `pg` driver, and `connect-pg-simple` — none of which are compatible with MySQL/MariaDB.
+>
+> For full database setup details, see [database.md](database.md).
 
-For a self-contained deployment using local storage and database:
+---
 
-1.  **Clone the Repository**:
-    ```bash
-    git clone <repository_url> supporthub
-    cd supporthub
-    ```
+## Prerequisites
 
-2.  **Configure Environment**:
-    ```bash
-    cp .env.example .env
-    nano .env
-    ```
-    Set `DOMAIN` to your server's domain pointing to the IP.
-    Set `EMAIL` for SSL notifications.
-    Leave `DATABASE_URL` pointing to `db:5432` (internal).
+| Requirement | Details |
+|---|---|
+| **Server OS** | Ubuntu 20.04 / 22.04 LTS (recommended). Minimum **2 vCPU, 2 GB RAM** |
+| **Docker Engine** | v24+ (`docker --version`) |
+| **Docker Compose** | V2 plugin — use `docker compose` (not `docker-compose`) |
+| **Domain** | A domain name with DNS A-record pointing to your server |
+| **Ports** | 80 and 443 open in firewall |
 
-3.  **Deploy**:
-    ```bash
-    chmod +x scripts/deploy.sh
-    ./scripts/deploy.sh
-    ```
+---
 
-## 2. Infrastructure Configuration
+## 1. Clone & Configure
 
-SupportHub supports flexible infrastructure configurations.
-
-### Database Options
-
-**Option A: Internal Database (Default)**
-The default `compose.production.yml` runs a PostgreSQL container.
--   **Data Persistence**: Stored in docker volume `postgres_data`.
--   **Pros**: Easy setup, zero cost.
--   **Cons**: Managed backups are manual.
-
-**Option B: External Managed Database**
-To use a managed database service (Recommended for high availability):
-
-1.  Provision a PostgreSQL 15+ instance.
-2.  Update `DATABASE_URL` in `.env`.
-
-**Connection String Examples:**
-
-*   **AWS RDS**:
-    ```env
-    DATABASE_URL=postgresql://postgres:password@rds-endpoint.us-east-1.rds.amazonaws.com:5432/supporthub?sslmode=require
-    ```
-
-*   **Azure Database for PostgreSQL**:
-    ```env
-    # Flexible Server (Standard)
-    DATABASE_URL=postgresql://adminuser:password@my-server.postgres.database.azure.com:5432/supporthub?sslmode=require
-    
-    # Single Server (Legacy - requires @hostname)
-    # DATABASE_URL=postgresql://adminuser@my-server:password@my-server.postgres.database.azure.com:5432/supporthub?sslmode=require
-    ```
-
-*   **DigitalOcean Managed Database**:
-    ```env
-    # Use the connection string provided in DO Dashboard (Pool mode recommended)
-    # Ensure '?sslmode=require' is appended.
-    DATABASE_URL=postgresql://doadmin:password@db-postgresql-nyc3-12345.a.db.ondigitalocean.com:25060/supporthub?sslmode=require
-    ```
-
-3.  Update `compose.production.yml`:
-    -   Remove the `db` service.
-    -   Remove `depends_on: db` from `app`.
-
-### File Storage Options
-
-SupportHub supports Local, AWS S3 / DigitalOcean Spaces, and Azure Blob Storage.
-
-**Option A: Internal Storage (Default - LOCAL)**
-Files are stored in the `app` container's `/app/uploads` volume (mapped to `app_uploads` docker volume).
--   **Config**: `STORAGE_PROVIDER=LOCAL` (or unset).
-
-**Option B: AWS S3 / DigitalOcean Spaces / MinIO**
-1.  Create a bucket/space.
-2.  Create API Keys (Access Key ID, Secret Access Key).
-3.  Update `.env`:
-
-    **AWS S3**:
-    ```env
-    STORAGE_PROVIDER=S3
-    AWS_ACCESS_KEY_ID=your_access_key
-    AWS_SECRET_ACCESS_KEY=your_secret_key
-    AWS_REGION=us-east-1
-    AWS_BUCKET=my-bucket-name
-    ```
-
-    **DigitalOcean Spaces**:
-    ```env
-    STORAGE_PROVIDER=S3
-    AWS_ACCESS_KEY_ID=your_spaces_key
-    AWS_SECRET_ACCESS_KEY=your_spaces_secret
-    AWS_REGION=nyc3
-    AWS_BUCKET=my-space-name
-    # Critical: Set endpoint for Spaces
-    S3_ENDPOINT=https://nyc3.digitaloceanspaces.com
-    ```
-
-**Option C: Azure Blob Storage**
-SupportHub supports native Azure Blob Storage.
-
-1.  Create a Storage Account.
-2.  Get "Access Keys" (Account Name + Key).
-3.  Update `.env`:
-    ```env
-    STORAGE_PROVIDER=AZURE
-    AZURE_STORAGE_ACCOUNT_NAME=mystorageaccount
-    AZURE_STORAGE_ACCOUNT_KEY=my_long_access_key_...
-    AZURE_STORAGE_CONTAINER_NAME=supporthub-uploads
-    ```
-
-## 3. Security Verification
-
-### Code Vulnerabilities
-A security audit was performed on the codebase.
--   **Current Status**: 8 Dependencies with vulnerabilities found (mostly moderate).
--   **Action**: Run `npm audit fix` during build process or manually update dependencies.
--   **Recommendation**: Keep dependencies updated regularly.
-
-### SSL / HTTPS
-Deployment script manages SSL automatically via Let's Encrypt (Certbot).
--   **Verification**: Ensure port 80/443 are open.
--   **Checks**: Script attempts validation for root domain and `www` subdomain.
-
-### Secrets
-Ensure `.env` file is secured (`chmod 600 .env`) and never committed to git.
-
-## 4. Maintenance
-
-### Updates
-To update the application:
-1.  `git pull`
-2.  `./scripts/deploy.sh` (Rebuilds containers and applies migrations).
-
-### Backup
-**Database**:
 ```bash
-docker compose exec db pg_dump -U supporthub supporthub > backup_$(date +%F).sql
-```
-**Storage (Local)**:
-Backup the `app_uploads` volume data (usually in `/var/lib/docker/volumes/...`).
+# Clone the repository
+git clone <repository_url> supporthub
+cd supporthub
 
-## 5. Troubleshooting
+# Copy and edit environment file
+cp .env.example .env
+nano .env
+```
 
-Check logs:
+**Minimum required `.env` values:**
 ```bash
-docker compose logs -f app
-docker compose logs -f nginx
+# Application
+NODE_ENV=production
+DOMAIN=your-domain.com          # Used for SSL certificate
+EMAIL=admin@your-domain.com     # Let's Encrypt notifications
+
+# Security — CRITICAL: generate a strong secret
+SESSION_SECRET=$(openssl rand -base64 48)
+
+# Database — see options below
+DATABASE_URL=postgresql://supporthub:password@db:5432/supporthub
 ```
-Restart specific service:
+
+---
+
+## 2. Database Options
+
+### Option A: Internal PostgreSQL (Default — simplest)
+
+The default `compose.production.yml` includes a PostgreSQL 15 container.
+
+- ✅ No extra setup needed
+- ✅ Zero cost
+- ⚠️ Backups are manual (see section 5)
+- ❌ Not suitable for multi-server or high-availability setups
+
+Leave `DATABASE_URL` pointing to the internal container:
 ```bash
-docker compose restart app
+DATABASE_URL=postgresql://supporthub:${POSTGRES_PASSWORD}@db:5432/supporthub
 ```
+
+Set a strong database password:
+```bash
+POSTGRES_PASSWORD=your_strong_db_password
+POSTGRES_USER=supporthub
+POSTGRES_DB=supporthub
+```
+
+---
+
+### Option B: External Managed PostgreSQL (Recommended for Production)
+
+Use any of the following managed services. After provisioning, update `.env` and modify `compose.production.yml`.
+
+**AWS RDS for PostgreSQL:**
+```bash
+DATABASE_URL=postgresql://supporthub:password@your-instance.us-east-1.rds.amazonaws.com:5432/supporthub?sslmode=require
+```
+
+**DigitalOcean Managed Database:**
+```bash
+# Port is 25060, not 5432
+DATABASE_URL=postgresql://doadmin:password@db-postgresql-nyc3-xxxxx.a.db.ondigitalocean.com:25060/supporthub?sslmode=require
+```
+
+**Azure Database for PostgreSQL (Flexible Server):**
+```bash
+DATABASE_URL=postgresql://supporthub:password@your-server.postgres.database.azure.com:5432/supporthub?sslmode=require
+```
+
+**Self-hosted PostgreSQL on separate server:**
+```bash
+DATABASE_URL=postgresql://supporthub:password@your.db.server.ip:5432/supporthub?sslmode=require
+```
+
+**Update `compose.production.yml` to remove the internal DB:**
+```yaml
+# Remove the entire 'db' service block and these lines under 'app':
+# depends_on:
+#   db:
+#     condition: service_healthy
+```
+
+> 📖 Full managed database setup instructions: [database.md](database.md)
+
+---
+
+## 3. Deployment Commands
+
+### Option A: SSL Production (Recommended — requires a real domain)
+Sets up Nginx with automatic Let's Encrypt HTTPS certificates:
+
+```bash
+docker compose -f compose.production.yml up -d --build
+```
+
+Access: `https://your-domain.com`
+
+---
+
+### Option B: Behind Load Balancer / Reverse Proxy (No SSL termination)
+Use when SSL is handled upstream (AWS ALB, Cloudflare, Azure Front Door, etc.):
+
+```bash
+docker compose -f compose.nossl.yml up -d --build
+```
+
+Access: `http://your-server-ip:5000`
+
+---
+
+### Option C: Local Development
+```bash
+docker compose -f compose.dev.yml up -d --build
+```
+
+Access: `https://localhost` (accept the self-signed certificate warning)
+
+---
+
+## 4. First Run
+
+After deployment:
+
+1. **Access the admin portal:** `https://your-domain.com/admin`
+2. **Default credentials:**
+   - Admin: `admin@supporthub.com` / `admin123`
+   - Agent: `agent@supporthub.com` / `agent123`
+3. **Change passwords immediately** — Admin Settings → Admin Users
+
+---
+
+## 5. File Storage Options
+
+By default, uploads are stored in a local Docker volume (`app_uploads`). For multi-server or cloud deployments, use object storage.
+
+**AWS S3:**
+```bash
+STORAGE_PROVIDER=S3
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_REGION=us-east-1
+AWS_BUCKET=supporthub-uploads
+```
+
+**DigitalOcean Spaces (S3-compatible):**
+```bash
+STORAGE_PROVIDER=S3
+AWS_ACCESS_KEY_ID=your_spaces_key
+AWS_SECRET_ACCESS_KEY=your_spaces_secret
+AWS_REGION=nyc3
+AWS_BUCKET=my-space-name
+S3_ENDPOINT=https://nyc3.digitaloceanspaces.com
+```
+
+**Azure Blob Storage:**
+```bash
+STORAGE_PROVIDER=AZURE
+AZURE_STORAGE_ACCOUNT_NAME=mystorageaccount
+AZURE_STORAGE_ACCOUNT_KEY=your_long_access_key
+AZURE_STORAGE_CONTAINER_NAME=supporthub-uploads
+```
+
+---
+
+## 6. Backups
+
+### Database
+
+**Internal Docker database:**
+```bash
+# Backup
+docker compose -f compose.production.yml exec db \
+    pg_dump -U supporthub supporthub > "backup_$(date +%F_%H%M%S).sql"
+
+# Restore
+docker compose -f compose.production.yml exec -T db \
+    psql -U supporthub supporthub < backup_2024-01-01.sql
+```
+
+**External managed database:**
+```bash
+# Requires psql client installed on your server
+pg_dump "$DATABASE_URL" | gzip > "backup_$(date +%F).sql.gz"
+```
+
+**Schedule with cron (daily at 02:00):**
+```bash
+0 2 * * * cd /path/to/supporthub && docker compose -f compose.production.yml exec -T db pg_dump -U supporthub supporthub | gzip > /backups/db_$(date +\%F).sql.gz
+```
+
+### File Uploads (local storage)
+```bash
+# Backup the Docker volume
+docker run --rm \
+    -v supporthub_app_uploads:/data \
+    -v /backups:/backup \
+    alpine tar czf /backup/uploads_$(date +%F).tar.gz -C /data .
+```
+
+---
+
+## 7. Updates
+
+```bash
+cd /path/to/supporthub
+
+# Pull latest code
+git pull
+
+# Rebuild and restart (zero-downtime for DB changes)
+docker compose -f compose.production.yml up -d --build
+
+# Schema migrations run automatically on startup
+# To run manually:
+docker compose -f compose.production.yml exec app npm run db:push
+```
+
+---
+
+## 8. Security Hardening
+
+```bash
+# Protect .env file
+chmod 600 .env
+
+# Verify .env is not in git
+grep ".env" .gitignore   # Should show: .env
+
+# Check for exposed ports (only 80 and 443 should be public)
+ss -tlnp
+
+# Firewall (UFW)
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP (for Let's Encrypt)
+sudo ufw allow 443/tcp   # HTTPS
+sudo ufw enable
+```
+
+---
+
+## 9. Health Checks & Monitoring
+
+```bash
+# Application health
+curl https://your-domain.com/api/health
+# Expected: {"status":"ok","timestamp":"..."}
+
+# Container status
+docker compose -f compose.production.yml ps
+
+# Logs
+docker compose -f compose.production.yml logs -f app
+docker compose -f compose.production.yml logs -f nginx
+
+# Restart a service
+docker compose -f compose.production.yml restart app
+```
+
+---
+
+## 10. Full `.env` Reference
+
+```bash
+# ─── Core ─────────────────────────────────────────────
+NODE_ENV=production
+PORT=5000
+DOMAIN=your-domain.com
+EMAIL=admin@your-domain.com
+
+# ─── Security ─────────────────────────────────────────
+# Generate: openssl rand -base64 48
+SESSION_SECRET=your_very_long_random_secret
+TRUST_PROXY=1
+
+# ─── Database (PostgreSQL only) ────────────────────────
+DATABASE_URL=postgresql://user:password@host:5432/supporthub?sslmode=require
+
+# Internal DB only — remove if using external DB
+POSTGRES_DB=supporthub
+POSTGRES_USER=supporthub
+POSTGRES_PASSWORD=your_db_password
+
+# ─── Email ────────────────────────────────────────────
+# Option 1: SendGrid
+SENDGRID_API_KEY=SG.xxx
+VERIFIED_SENDER_EMAIL=noreply@your-domain.com
+
+# Option 2: SMTP
+SMTP_HOST=smtp.yourprovider.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+
+# ─── SMS (Optional) ───────────────────────────────────
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+
+# ─── File Storage ─────────────────────────────────────
+STORAGE_PROVIDER=LOCAL   # LOCAL | S3 | AZURE
+
+# AWS S3 / DigitalOcean Spaces
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+AWS_BUCKET=
+S3_ENDPOINT=             # Only for DO Spaces / MinIO
+
+# Azure Blob Storage
+AZURE_STORAGE_ACCOUNT_NAME=
+AZURE_STORAGE_ACCOUNT_KEY=
+AZURE_STORAGE_CONTAINER_NAME=supporthub-uploads
+```
+
+---
+
+## Production Checklist
+
+- [ ] `SESSION_SECRET` set to a strong random value (`openssl rand -base64 48`)
+- [ ] `NODE_ENV=production`
+- [ ] `DATABASE_URL` with `?sslmode=require` for external DB
+- [ ] Default admin/agent passwords changed after first login
+- [ ] `.env` has permissions `600` and is excluded from git
+- [ ] Firewall allows only 22, 80, 443
+- [ ] SSL certificate active (HTTPS working)
+- [ ] Automated database backups configured
+- [ ] Email service configured (SendGrid or SMTP)

@@ -51,6 +51,8 @@ else
     echo "Warning: Templates not found at expected location"
 fi
 
+export DOMAIN=$(echo "$DOMAIN" | tr -d '\r')
+
 for file in /etc/nginx/conf.d/*.conf; do
     if [ -f "$file" ]; then
         echo "Processing $file..."

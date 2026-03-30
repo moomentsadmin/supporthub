@@ -2,7 +2,7 @@
 
 A comprehensive customer support ticket management system built with modern web technologies. SupportHub provides a centralized platform for managing customer inquiries across multiple communication channels including email, WhatsApp, Twitter, and Facebook.
 
-![SupportHub Dashboard](https://via.placeholder.com/800x400?text=SupportHub+Dashboard)
+
 
 ## ✨ Features
 

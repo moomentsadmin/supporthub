@@ -1,215 +1,174 @@
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
-import type { TicketWithAgent } from "@shared/schema";
 import { useWhitelabelContext } from "@/components/whitelabel-provider";
-import { 
+import {
   LayoutDashboard,
   Ticket,
   User,
   MessageCircle,
   FileText,
   BarChart3,
-  ChevronDown,
-  Settings,
-  LogOut
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useLogout } from "@/lib/auth";
 import { useState } from "react";
+import type { TicketWithAgent } from "@shared/schema";
+
+const MAIN_NAV = [
+  { label: "Dashboard", href: "/agents", icon: LayoutDashboard, matchExact: true },
+  { label: "All Tickets", href: "/agents/tickets", icon: Ticket, badge: "totalTickets" },
+  { label: "My Tickets", href: "/agents/my-tickets", icon: User, badge: "myTickets" },
+  { label: "Live Chat", href: "/agents/chat", icon: MessageCircle },
+];
+
+const TOOL_NAV = [
+  { label: "Templates", href: "/agents/templates", icon: FileText },
+  { label: "Reports",   href: "/agents/reports",   icon: BarChart3 },
+];
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { config: whitelabelConfig } = useWhitelabelContext();
+  const { config: wl } = useWhitelabelContext();
   const { agent } = useAuth();
-  const logout = useLogout();
-  const [isExpanded, setIsExpanded] = useState(true);
-  
-  const { data: tickets } = useQuery<TicketWithAgent[]>({
-    queryKey: ["/api/agent/tickets"]
-  });
+  const logoutMutation = useLogout();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const totalTickets = tickets?.length || 0;
-  const myTickets = tickets?.filter(t => t.assignedAgentId).length || 0;
-  const openTickets = tickets?.filter(t => t.status === 'open').length || 0;
+  const { data: tickets } = useQuery<TicketWithAgent[]>({ queryKey: ["/api/agent/tickets"] });
 
-  const mainNavItems = [
-    {
-      label: "Dashboard",
-      href: "/agents",
-      icon: LayoutDashboard,
-      active: location === "/agents" || location === "/agents/dashboard",
-    },
-    {
-      label: "All Tickets", 
-      href: "/agents/tickets",
-      icon: Ticket,
-      badge: totalTickets,
-      active: location === "/agents/tickets",
-    },
-    {
-      label: "My Tickets",
-      href: "/agents/my-tickets", 
-      icon: User,
-      badge: myTickets,
-      active: location === "/agents/my-tickets",
-    },
-    {
-      label: "Live Chat",
-      href: "/agents/chat",
-      icon: MessageCircle,
-      active: location === "/agents/chat",
-    },
-  ];
+  const badges = {
+    totalTickets: tickets?.length || 0,
+    myTickets: tickets?.filter(t => t.assignedAgentId).length || 0,
+  };
 
-  const secondaryNavItems = [
-    { label: "Templates", href: "/agents/templates", icon: FileText },
-    { label: "Reports", href: "/agents/reports", icon: BarChart3 },
-  ];
+  const isActive = (href: string, matchExact?: boolean) => {
+    if (matchExact) return location === href || location === "/agents/dashboard";
+    return location === href || location.startsWith(href + "/");
+  };
 
   return (
-    <aside className={cn(
-      "fixed left-0 top-16 bottom-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 overflow-y-auto transition-all duration-300",
-      isExpanded ? "w-72" : "w-20"
-    )}>
-      <div className="flex flex-col h-full">
-        {/* Main Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-1">
-          {/* Primary Navigation Section */}
-          <div className="space-y-2">
-            <div className={cn("px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider", !isExpanded && "hidden")}>
-              Navigation
-            </div>
-            {mainNavItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <a 
-                  className={cn(
-                    "flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group relative",
-                    item.active 
-                      ? "text-white shadow-lg" 
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  )}
-                  style={item.active ? {
-                    backgroundColor: `${whitelabelConfig?.primaryColor || '#3b82f6'}`,
-                    boxShadow: `0 4px 12px ${whitelabelConfig?.primaryColor || '#3b82f6'}40`
-                  } : {}}
-                  title={!isExpanded ? item.label : ""}
-                >
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
-                  {isExpanded && (
-                    <>
-                      <span className="flex-1 font-medium text-sm">{item.label}</span>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <Badge 
-                          className={cn(
-                            "ml-auto text-xs px-2 py-1",
-                            item.active 
-                              ? "bg-white/20 text-white" 
-                              : "bg-slate-700 text-slate-200"
-                          )}
-                        >
-                          {item.badge > 99 ? "99+" : item.badge}
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </a>
-              </Link>
-            ))}
-          </div>
-
-          {/* Secondary Navigation Section */}
-          {isExpanded && (
-            <>
-              <div className="pt-6 pb-2">
-                <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Tools
-                </div>
-              </div>
-              <div className="space-y-2">
-                {secondaryNavItems.map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <a 
-                      className={cn(
-                        "flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200",
-                        location === item.href 
-                          ? "text-white bg-slate-700/70" 
-                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/40"
-                      )}
-                    >
-                      <item.icon className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-sm">{item.label}</span>
-                    </a>
-                  </Link>
-                ))}
-              </div>
-            </>
-          )}
-        </nav>
-
-        {/* Footer Section */}
-        <div className="border-t border-slate-700/50 p-3 space-y-2">
-          {/* Agent Profile */}
-          {isExpanded && (
-            <Link href="/agents/profile">
-              <a className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-all duration-200 group">
-                {agent?.avatar ? (
-                  <img
-                    src={agent.avatar}
-                    alt="Agent"
-                    className="w-8 h-8 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-semibold text-white">
-                      {agent?.name?.charAt(0) || "A"}
-                    </span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{agent?.name}</p>
-                  <p className="text-xs text-slate-400 truncate">{agent?.email}</p>
-                </div>
-              </a>
-            </Link>
-          )}
-
-          {/* Settings & Logout */}
-          <div className="flex gap-2">
-            <Link href="/agents/profile">
-              <a 
-                className={cn(
-                  "flex items-center justify-center px-4 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all duration-200",
-                  !isExpanded && "flex-1"
-                )}
-                title="Settings"
-              >
-                <Settings className="w-4 h-4" />
-                {isExpanded && <span className="ml-2 text-sm">Settings</span>}
-              </a>
-            </Link>
-            <button 
-              onClick={logout}
-              className={cn(
-                "flex items-center justify-center px-4 py-2.5 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200",
-                !isExpanded && "flex-1"
-              )}
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-              {isExpanded && <span className="ml-2 text-sm">Logout</span>}
-            </button>
-          </div>
-
-          {/* Collapse Button */}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-center px-4 py-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700/30 transition-all duration-200"
-            title={isExpanded ? "Collapse" : "Expand"}
+    <aside
+      className={cn(
+        "sidebar-root flex flex-col h-screen flex-shrink-0 transition-all duration-300 z-30",
+        collapsed ? "w-[68px]" : "w-[220px]"
+      )}
+    >
+      {/* Logo */}
+      <div className={cn("flex items-center h-14 px-3 border-b border-sidebar-border", collapsed ? "justify-center" : "gap-3")}>
+        {wl?.logoUrl ? (
+          <img src={wl.logoUrl} alt={wl.companyName || "Logo"} className={cn("object-contain", collapsed ? "h-7 w-7" : "h-7 w-auto")} />
+        ) : (
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: wl?.primaryColor || "hsl(220 80% 54%)" }}
           >
-            <ChevronDown className={cn("w-4 h-4 transition-transform", !isExpanded && "-rotate-90")} />
-          </button>
-        </div>
+            <Headphones className="w-4 h-4 text-white" />
+          </div>
+        )}
+        {!collapsed && (
+          <div className="min-w-0">
+            <p className="text-[13px] font-bold text-white leading-tight truncate">{wl?.companyName || "SupportHub"}</p>
+            <p className="text-[10px] text-sidebar-text leading-tight">Agent Portal</p>
+          </div>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+        {!collapsed && <p className="sidebar-section-label">Navigation</p>}
+        {MAIN_NAV.map(item => {
+          const active = isActive(item.href, item.matchExact);
+          const badgeCount = item.badge ? badges[item.badge as keyof typeof badges] : 0;
+          return (
+            <Link key={item.href} href={item.href}>
+              <a
+                className={cn("sidebar-link", active && "active")}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {badgeCount > 0 && (
+                      <span className={cn(
+                        "text-[10px] font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
+                        active
+                          ? "bg-white/20 text-white"
+                          : "bg-sidebar-bg-hover text-sidebar-text"
+                      )}>
+                        {badgeCount > 99 ? "99+" : badgeCount}
+                      </span>
+                    )}
+                  </>
+                )}
+              </a>
+            </Link>
+          );
+        })}
+
+        {!collapsed && <p className="sidebar-section-label mt-3">Tools</p>}
+        {collapsed && <div className="h-2" />}
+        {TOOL_NAV.map(item => {
+          const active = isActive(item.href);
+          return (
+            <Link key={item.href} href={item.href}>
+              <a
+                className={cn("sidebar-link", active && "active")}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                {!collapsed && <span className="truncate">{item.label}</span>}
+              </a>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-2 space-y-1">
+        {!collapsed && (
+          <Link href="/agents/profile">
+            <a className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-sidebar-bg-hover transition-colors cursor-pointer">
+              {agent?.avatar ? (
+                <img src={agent.avatar} alt="Avatar" className="w-7 h-7 rounded-full object-cover" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-semibold text-white">{agent?.name?.charAt(0)?.toUpperCase() || "A"}</span>
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-medium text-white truncate">{agent?.name}</p>
+                <p className="text-[10px] text-sidebar-text truncate">{agent?.email}</p>
+              </div>
+            </a>
+          </Link>
+        )}
+
+        <button
+          onClick={() => logoutMutation.mutate()}
+          className={cn(
+            "sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10",
+            collapsed && "justify-center"
+          )}
+          title={collapsed ? "Sign Out" : undefined}
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          {!collapsed && <span>Sign Out</span>}
+        </button>
+
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={cn("sidebar-link w-full", collapsed && "justify-center")}
+          title={collapsed ? "Expand" : "Collapse"}
+        >
+          {collapsed
+            ? <ChevronRight className="w-4 h-4" />
+            : <><ChevronLeft className="w-4 h-4" /><span>Collapse</span></>
+          }
+        </button>
       </div>
     </aside>
   );

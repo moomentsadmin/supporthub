@@ -9,8 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { CircularProgress } from "@/components/ui/progress-indicator";
 import { useMicroInteractions } from "@/hooks/useMicroInteractions";
 import { ToastContainer } from "@/components/ui/animated-toast";
-import Header from "@/components/header";
-import Sidebar from "@/components/sidebar";
+import { AgentLayout } from "@/components/agent-layout";
 import { 
   MessageCircle, 
   Send, 
@@ -147,33 +146,9 @@ export default function AgentChat() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
-        <div className="flex pt-16">
-          <Sidebar />
-          <main className="flex-1 ml-64 p-6">
-            <div className="flex items-center justify-center h-96">
-              <div className="text-center animate-fade-in">
-                <CircularProgress value={50} size={60} className="mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">Loading chat sessions...</p>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      
-      <div className="flex pt-16">
-        <Sidebar />
-        
-        <main className="flex-1 ml-64 p-6">
+    <>
+      <AgentLayout title="Live Chat" subtitle="Manage active chat sessions">
           {/* Header */}
           <div className="mb-6 animate-slide-in">
             <div className="flex items-center space-x-2 mb-2">
@@ -359,11 +334,8 @@ export default function AgentChat() {
               )}
             </Card>
           </div>
-        </main>
-      </div>
-      
-      {/* Toast Notifications */}
+      </AgentLayout>
       <ToastContainer toasts={toasts} />
-    </div>
+    </>
   );
 }

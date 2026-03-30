@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { useLogin } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot } from "lucide-react";
+import { Headphones, ArrowRight, Loader2 } from "lucide-react";
 import { useWhitelabelContext } from "@/components/whitelabel-provider";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const login = useLogin();
-  const { config: whitelabelConfig } = useWhitelabelContext();
+  const { config: wl } = useWhitelabelContext();
+  const brand = wl?.primaryColor || "#3b82f6";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,84 +18,122 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      
-      <Card className="w-full max-w-md shadow-lg border">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            {whitelabelConfig?.logoUrl ? (
-              <img
-                src={whitelabelConfig.logoUrl}
-                alt={whitelabelConfig.companyName || "Logo"}
-                className="h-12 w-auto object-contain"
-              />
-            ) : (
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: whitelabelConfig?.primaryColor || '#3b82f6' }}
-              >
-                <Bot className="w-6 h-6 text-white" />
-              </div>
-            )}
+    <div className="min-h-screen flex bg-background">
+      {/* Left decorative panel */}
+      <div
+        className="hidden lg:flex flex-col items-start justify-between w-[45%] p-12 text-white relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(222 40% 18%) 100%)" }}
+      >
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{ background: `radial-gradient(ellipse at 30% 50%, ${brand}, transparent 70%)` }}
+        />
+
+        <div className="relative z-10">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: brand }}>
+            <Headphones className="w-6 h-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-medium text-gray-800">
-            {whitelabelConfig?.companyName || "SupportHub"}
-          </CardTitle>
-          <CardDescription className="text-gray-600">Sign in to your agent account</CardDescription>
-        </CardHeader>
-        <CardContent>
+          <p className="text-lg font-bold">{wl?.companyName || "SupportHub"}</p>
+        </div>
+
+        <div className="relative z-10 space-y-6">
+          <h1 className="text-3xl font-bold leading-tight tracking-tight">
+            Your support queue,<br />
+            <span style={{ color: brand }}>all in one place.</span>
+          </h1>
+          <p className="text-sm leading-relaxed max-w-xs" style={{ color: "hsl(215 20% 55%)" }}>
+            Manage tickets, respond to customers, and track your performance — all from one powerful workspace.
+          </p>
+          <div className="space-y-3">
+            {["View and manage your ticket queue", "Reply with smart templates", "Track your resolution metrics"].map(item => (
+              <div key={item} className="flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: brand }} />
+                <span className="text-sm" style={{ color: "hsl(215 20% 55%)" }}>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative z-10 text-[11px]" style={{ color: "hsl(215 20% 48%)" }}>
+          {wl?.footerText || `© ${new Date().getFullYear()} ${wl?.companyName || "SupportHub"}. All rights reserved.`}
+        </p>
+      </div>
+
+      {/* Right form panel */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-sm animate-fade-in">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-8 lg:hidden">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: brand }}>
+              <Headphones className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-foreground">{wl?.companyName || "SupportHub"}</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Agent sign in</h2>
+            <p className="text-sm text-muted-foreground mt-1">Sign in to access your agent workspace</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
-                className="mt-1 bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                 placeholder="agent@supporthub.com"
+                autoComplete="email"
               />
             </div>
-            <div>
-              <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
-                className="mt-1 bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                 placeholder="••••••••"
+                autoComplete="current-password"
               />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full text-white font-semibold py-3"
+
+            <button
+              type="submit"
               disabled={login.isPending}
-              style={{ 
-                backgroundColor: whitelabelConfig?.primaryColor || '#3b82f6',
-                color: 'white'
-              }}
+              className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 mt-2"
+              style={{ background: brand }}
             >
-              {login.isPending ? "Signing in..." : "Sign in"}
-            </Button>
+              {login.isPending
+                ? <><Loader2 className="w-4 h-4 animate-spin" />Signing in…</>
+                : <>Sign in<ArrowRight className="w-4 h-4" /></>
+              }
+            </button>
           </form>
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm font-semibold text-blue-900 mb-2">Demo Agent Credentials:</p>
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-blue-700">Email:</span>
-                <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">agent@example.com</code>
+
+          {/* Hint */}
+          <div className="mt-8 p-4 rounded-xl bg-muted border border-border">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Default credentials</p>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-16">Email</span>
+                <code className="text-xs bg-background px-2 py-0.5 rounded border border-border font-mono">
+                  agent@supporthub.com
+                </code>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-blue-700">Password:</span>
-                <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">password123</code>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-16">Password</span>
+                <code className="text-xs bg-background px-2 py-0.5 rounded border border-border font-mono">
+                  agent123
+                </code>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

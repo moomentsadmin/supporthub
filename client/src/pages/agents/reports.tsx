@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Header from "@/components/header";
-import Sidebar from "@/components/sidebar";
+import { AgentLayout } from "@/components/agent-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -42,13 +41,7 @@ export default function AgentReports() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      
-      <div className="flex pt-16">
-        <Sidebar />
-        
-        <main className="flex-1 ml-64 p-6">
+    <AgentLayout title="Performance Reports">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
@@ -243,8 +236,6 @@ export default function AgentReports() {
               </CardContent>
             </Card>
           </div>
-        </main>
-      </div>
-    </div>
+    </AgentLayout>
   );
 }

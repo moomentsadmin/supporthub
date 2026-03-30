@@ -63,12 +63,14 @@ services:
     image: nginx:alpine
     container_name: supporthub_nginx
     restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/conf.d:/etc/nginx/templates/conf.d:ro
       - ./scripts/nginx-entrypoint.sh:/nginx-entrypoint.sh:ro
       - nginx_ssl:/etc/nginx/ssl
       - certbot_www:/var/www/certbot
@@ -79,11 +81,11 @@ services:
     networks:
       - supporthub_network
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/health", "||", "exit", "1" ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://localhost/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 30s
 
   # SSL Certificate Setup (runs once on deployment)
   ssl_init:

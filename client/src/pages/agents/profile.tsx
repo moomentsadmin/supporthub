@@ -11,8 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Header } from "@/components/header";
-import { Sidebar } from "@/components/sidebar";
+import { AgentLayout } from "@/components/agent-layout";
 import { User, Mail, Phone, Calendar, Edit3, Save, X, Key, Shield } from "lucide-react";
 
 export default function AgentProfile() {
@@ -116,11 +115,7 @@ export default function AgentProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      <div className="flex pt-16">
-        <Sidebar />
-        <main className="flex-1 ml-64 p-6">
+    <AgentLayout title="Agent Profile" subtitle="Manage your profile and account settings">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Header */}
             <div className="mb-8">
@@ -320,8 +315,6 @@ export default function AgentProfile() {
               </CardContent>
             </Card>
           </div>
-        </main>
-      </div>
-    </div>
+    </AgentLayout>
   );
 }

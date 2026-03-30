@@ -1,0 +1,200 @@
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+Error: Error: Not allowed by CORS
+    at origin (/app/server/index.ts:50:16)
+    at /app/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/app/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/app/node_modules/cors/lib/index.js:204:7)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+    at /app/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:527:6)
+    at xXssProtectionMiddleware (file:///app/node_modules/helmet/index.mjs:307:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xPoweredByMiddleware (file:///app/node_modules/helmet/index.mjs:300:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xPermittedCrossDomainPoliciesMiddleware (file:///app/node_modules/helmet/index.mjs:293:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xFrameOptionsMiddleware (file:///app/node_modules/helmet/index.mjs:277:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xDownloadOptionsMiddleware (file:///app/node_modules/helmet/index.mjs:257:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xDnsPrefetchControlMiddleware (file:///app/node_modules/helmet/index.mjs:250:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xContentTypeOptionsMiddleware (file:///app/node_modules/helmet/index.mjs:242:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at strictTransportSecurityMiddleware (file:///app/node_modules/helmet/index.mjs:235:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at referrerPolicyMiddleware (file:///app/node_modules/helmet/index.mjs:203:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at originAgentClusterMiddleware (file:///app/node_modules/helmet/index.mjs:178:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at crossOriginResourcePolicyMiddleware (file:///app/node_modules/helmet/index.mjs:171:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at crossOriginOpenerPolicyMiddleware (file:///app/node_modules/helmet/index.mjs:155:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at contentSecurityPolicyMiddleware (file:///app/node_modules/helmet/index.mjs:120:4)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at helmetMiddleware (file:///app/node_modules/helmet/index.mjs:529:6)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+    at /app/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+    at expressInit (/app/node_modules/express/lib/middleware/init.js:40:5)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+    at /app/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+    at query (/app/node_modules/express/lib/middleware/query.js:45:5)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+Error: Error: Not allowed by CORS
+    at origin (/app/server/index.ts:50:16)
+    at /app/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/app/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/app/node_modules/cors/lib/index.js:204:7)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+    at /app/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:527:6)
+    at xXssProtectionMiddleware (file:///app/node_modules/helmet/index.mjs:307:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xPoweredByMiddleware (file:///app/node_modules/helmet/index.mjs:300:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xPermittedCrossDomainPoliciesMiddleware (file:///app/node_modules/helmet/index.mjs:293:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xFrameOptionsMiddleware (file:///app/node_modules/helmet/index.mjs:277:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xDownloadOptionsMiddleware (file:///app/node_modules/helmet/index.mjs:257:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xDnsPrefetchControlMiddleware (file:///app/node_modules/helmet/index.mjs:250:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at xContentTypeOptionsMiddleware (file:///app/node_modules/helmet/index.mjs:242:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at strictTransportSecurityMiddleware (file:///app/node_modules/helmet/index.mjs:235:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at referrerPolicyMiddleware (file:///app/node_modules/helmet/index.mjs:203:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at originAgentClusterMiddleware (file:///app/node_modules/helmet/index.mjs:178:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at crossOriginResourcePolicyMiddleware (file:///app/node_modules/helmet/index.mjs:171:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at crossOriginOpenerPolicyMiddleware (file:///app/node_modules/helmet/index.mjs:155:3)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at contentSecurityPolicyMiddleware (file:///app/node_modules/helmet/index.mjs:120:4)
+    at internalNext (file:///app/node_modules/helmet/index.mjs:525:6)
+    at helmetMiddleware (file:///app/node_modules/helmet/index.mjs:529:6)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+    at /app/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+    at expressInit (/app/node_modules/express/lib/middleware/init.js:40:5)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/app/node_modules/express/lib/router/index.js:328:13)
+    at /app/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+    at next (/app/node_modules/express/lib/router/index.js:280:10)
+    at query (/app/node_modules/express/lib/middleware/query.js:45:5)
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+GET /favicon.ico - Session ID: kc_6lAaC5ltIverpFC091aXFEvq8XpdX - Admin: none
+GET /api/health - Session ID: x5s2OOyqwCjUxWZpwtgK6uLW4dTbG_Ag - Admin: none
+3:05:05 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: ozLCNXDH92sys-gVB1d1tdwt4ngvHJYh - Admin: none
+3:05:38 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 78hwVgu_KkJLfCj-fVJ9p79Wq6tVWDkf - Admin: none
+3:06:10 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: -JkzTrTLQqvh6IAzTHjcpAxbgqOVCCom - Admin: none
+3:06:43 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: anWQMIjb2IQGtdCIMvV4rXqpXrCbq4Ql - Admin: none
+3:07:16 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: t9Ee3YyaF9tT5OliyVQw8ksLeKwS4H3q - Admin: none
+3:07:48 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: IXLs2m-HGDd78tDwULZCRwObHauoTcWi - Admin: none
+3:08:21 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: zv56PdhLP3rxxJS_mdT7pmHxHclXXn6j - Admin: none
+3:08:54 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 4MYgTh0Rhr4zz_zgplXw4imSrf80c1yt - Admin: none
+3:09:26 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: LITrOO5sqXDq894S721Ge-j7x56sL9dE - Admin: none
+3:09:59 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: gUy1xAGmlPACNEeo9oIJ3k0fV7ycfpVX - Admin: none
+3:10:32 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: fb3YPD47TVZJ1KVZgQ1sVWp9N7-Qg_hw - Admin: none
+3:11:04 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: gII-EpmYMTh87fnHb8gr7g5gnjbhaBJn - Admin: none
+3:11:37 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: x49osHvEhcXOU0Q80g_yX-3j8cws8YyF - Admin: none
+3:12:10 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: FBdMvAw-yTMJaqTvt60Cq8685z9cRfDu - Admin: none
+3:12:42 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: eKjhKrppTk1swyeAIWNFzZoNsdM-gvm- - Admin: none
+3:13:15 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: SNF6Ls-Z5CmgITBD17NbY6Suf9gDqjip - Admin: none
+3:13:47 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: U12vWorrSuZPyadLSJgrkMk2ib8Jnolk - Admin: none
+3:14:20 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: U4IEN5YcbQBLOmUOp9z6223XwMe9aZYA - Admin: none
+3:14:53 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: Ja0-Ba4ChGQQIyfEioMUl73-wIW6JrE8 - Admin: none
+3:15:25 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 2zeLqdeRzlWlshRUujfJh8tpZKx9NUJX - Admin: none
+3:15:58 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 6qeHePb0nBJHvkRAJMS4hX14vUWsXbZs - Admin: none
+3:16:31 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: bSU5DBP0p74dRLNv-xKyw2hgVuCzLlic - Admin: none
+3:17:03 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: F42oDvpMrSIK7hwklmvTAuAQWiwuwFR1 - Admin: none
+3:17:36 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 6GDrtAV2ebqBc8sDW7ADzOztSwur8CL9 - Admin: none
+3:18:09 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 7PoUylXmsd41lUZZ1953IMP2rfZLyjZw - Admin: none
+3:18:41 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: DW8rp7HHc_D9XFB2W43W7Wu2R4YXtrus - Admin: none
+3:19:14 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: EWq0VkjcfF-ZLaY27OUIUQWIT3o8nAzA - Admin: none
+3:19:46 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: P1dIdPN2eSavIqlrwtLotbuyk2p-ZHnm - Admin: none
+3:20:19 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: xwjcZ5lsBpvvfa604WK58aRyHl6iLsd9 - Admin: none
+3:20:52 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: yABKRhc6t5K88sz84dnV3N2WJP6pCWuY - Admin: none
+3:21:24 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 2AMmH7POi2uApCORlm74nKjqB6uDbnw3 - Admin: none
+3:21:57 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: tMrdrvsLbgKEcEbSmPJmhGYzUNTy54NR - Admin: none
+3:22:30 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: ix0a_UuCZbVflhtY__uXmE0-ZQwTvnQC - Admin: none
+3:23:02 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: t0nZ_UKnfBIVjkB7ibmQQ9wlvvmSeL-l - Admin: none
+3:23:35 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 6pHohfJFVZXXFZ0CA02-FlBha4MM2xum - Admin: none
+3:24:08 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 1Ep19WdT1tqJ7plS_A6HkRc328PED9fO - Admin: none
+3:24:41 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: MGBtguXtfLVZBithJvB_d_vSMuyDMGU7 - Admin: none
+3:25:13 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: yXOWtTQ8IRxgqTTRzkLFdxoig5xGgUWX - Admin: none
+3:25:46 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: R9tjl1bZxdXIRgMag-7zjRQWxDsaNsFa - Admin: none
+3:26:19 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: U2CjnyBmZZLY0-JGrcsnCH2tEm4DL9L- - Admin: none
+3:26:51 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: 8nmIMLb_oBY5fkaf_2AeiRwEeBDuCl2y - Admin: none
+3:27:24 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: -DeTHyEe8E917VzNWC_j9A7smaZCiaOh - Admin: none
+3:27:57 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: bnyUKDUXMVcN1l2wfEjFzEFFApSrtt-R - Admin: none
+3:28:29 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: GfdIKoyWnCegWD5a1VpfBgUdb_3f0bA2 - Admin: none
+3:29:02 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: I2cu9gCyMGz_6_vvfYKaiGq4-FbD4OED - Admin: none
+3:29:35 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: uZ9tMGX7PsVLunk_WwHZ3aESEsv9yeDZ - Admin: none
+3:30:08 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…
+GET /api/health - Session ID: S4D42O5LfXyxp0zvHWEf0TU6-YFSj1Rl - Admin: none
+3:30:40 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","database":"connected","timestamp"…

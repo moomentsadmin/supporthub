@@ -100,14 +100,14 @@ export default function PublicHome() {
       const ticket = await response.json();
       toast({
         title: "Ticket Created!",
-        description: `Your ticket #${ticket.id || 'ID'} has been created successfully. You'll receive email updates.`,
+        description: `Your ticket #${ticket.id || 'ID'} has been created successfully.`,
       });
       reset();
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create ticket. Please try again.",
+        description: error.message || "Failed to create ticket.",
         variant: "destructive",
       });
     },
@@ -136,7 +136,7 @@ export default function PublicHome() {
     onError: (error: Error) => {
       toast({
         title: "Search Error",
-        description: error.message || "Failed to search tickets. Please try again.",
+        description: error.message || "Failed to search tickets.",
         variant: "destructive",
       });
       setSearchResults([]);
@@ -151,22 +151,17 @@ export default function PublicHome() {
     if (!searchQuery.trim()) {
       toast({
         title: "Search Required",
-        description: "Please enter a ticket ID or email address to search.",
+        description: "Please enter a ticket ID or email.",
         variant: "destructive",
       });
       return;
     }
-    
-    searchTicketsMutation.mutate({ 
-      query: searchQuery.trim(), 
-      type: searchType 
-    });
+    searchTicketsMutation.mutate({ query: searchQuery.trim(), type: searchType });
   };
 
   const watchedPriority = watch("priority");
   const watchedChannel = watch("channel");
 
-  // Knowledge Base queries
   const { data: kbCategories = [] } = useQuery<string[]>({
     queryKey: ["/api/public/kb/categories"]
   });
@@ -179,18 +174,9 @@ export default function PublicHome() {
     queryFn: async () => {
       let url = "/api/public/kb";
       const params = new URLSearchParams();
-      
-      if (selectedKbCategory !== "all") {
-        params.set("category", selectedKbCategory);
-      }
-      if (kbSearchQuery) {
-        params.set("search", kbSearchQuery);
-      }
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-      
+      if (selectedKbCategory !== "all") params.set("category", selectedKbCategory);
+      if (kbSearchQuery) params.set("search", kbSearchQuery);
+      if (params.toString()) url += `?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch articles");
       return response.json();
@@ -202,130 +188,165 @@ export default function PublicHome() {
       return apiRequest("POST", `/api/public/kb/${id}/rate`, { helpful });
     },
     onSuccess: () => {
-      toast({
-        title: "Thank you!",
-        description: "Your feedback has been recorded.",
-      });
+      toast({ title: "Thank you!", description: "Your feedback has been recorded." });
     }
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+    <div className="min-h-screen bg-background selection:bg-primary/10">
+      {/* Dynamic Header */}
+      <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               {whitelabelConfig?.logoUrl ? (
-                <img
-                  src={whitelabelConfig.logoUrl}
-                  alt={whitelabelConfig.companyName || "Logo"}
-                  className="h-8 w-auto object-contain"
-                />
+                <img src={whitelabelConfig.logoUrl} alt="Logo" className="h-8 w-auto" />
               ) : (
-                <div 
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ 
-                    backgroundColor: whitelabelConfig?.primaryColor || '#3b82f6' 
-                  }}
-                >
-                  <MessageSquare className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-primary-foreground" />
                 </div>
               )}
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-bold tracking-tight text-foreground">
                 {whitelabelConfig?.companyName || "SupportHub"}
-              </h1>
+              </span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Link href="/customer/login">
-                <Button size="sm">
-                  <Users className="w-4 h-4 mr-2" />
-                  Customer Login
+                <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-foreground">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/customer/register">
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
+                  Sign Up
                 </Button>
               </Link>
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            How can we help you today?
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Submit a support ticket or check the status of your existing requests. 
-            {whitelabelConfig?.companyName ? `${whitelabelConfig.companyName} team is` : 'Our team is'} here to help you resolve any issues quickly.
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-hero-pattern py-20 px-4">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:32px_32px]" />
+        <div className="relative max-w-4xl mx-auto text-center space-y-6">
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-sm font-medium text-white/80 mb-4 animate-fade-in shadow-xl">
+            <Badge className="mr-2 bg-primary/20 text-primary-foreground border-none">New</Badge>
+            Integrated self-service support portal
+          </div>
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight animate-slide-up">
+            Help Center
+          </h1>
+          <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto animate-slide-up [animation-delay:100ms]">
+            Find answers to common questions or connect with our support team for personalized assistance.
           </p>
+          
+          <div className="max-w-2xl mx-auto pt-8 animate-slide-up [animation-delay:200ms]">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
+              <div className="relative flex items-center bg-white dark:bg-gray-800 rounded-2xl p-2 shadow-2xl overflow-hidden ring-1 ring-white/10">
+                <Search className="w-5 h-5 text-muted-foreground ml-3" />
+                <input 
+                  type="text" 
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-foreground px-3 py-3 text-lg placeholder:text-muted-foreground"
+                  placeholder="Search knowledge base..."
+                  value={kbSearchQuery}
+                  onChange={(e) => setKbSearchQuery(e.target.value)}
+                />
+                <Button className="rounded-xl px-6 py-6 h-auto bg-primary hover:bg-primary/90 hidden sm:flex">
+                  Search
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Main Content */}
-        <Tabs defaultValue="kb" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto">
-            <TabsTrigger value="kb">Knowledge Base</TabsTrigger>
-            <TabsTrigger value="create">Create Ticket</TabsTrigger>
-            <TabsTrigger value="status">Check Status</TabsTrigger>
-          </TabsList>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 pb-20">
+        <Tabs defaultValue="kb" className="space-y-12">
+          {/* Enhanced Tabs Trigger */}
+          <div className="flex justify-center">
+            <TabsList className="glass inline-flex h-14 p-1.5 rounded-2xl border bg-white/50 backdrop-blur-xl shadow-xl">
+              <TabsTrigger value="kb" className="rounded-xl px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                Knowledge Base
+              </TabsTrigger>
+              <TabsTrigger value="create" className="rounded-xl px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                Create Ticket
+              </TabsTrigger>
+              <TabsTrigger value="status" className="rounded-xl px-8 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                Check Status
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="kb" className="space-y-6">
+          {/* Knowledge Base Content */}
+          <TabsContent value="kb" className="animate-fade-in focus-visible:outline-none">
             {selectedArticle ? (
-              <div className="max-w-4xl mx-auto space-y-6">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+              <div className="max-w-4xl mx-auto animate-slide-up">
+                <Card className="border-none shadow-2xl rounded-3xl overflow-hidden overflow-y-auto max-h-[80vh]">
+                  <CardHeader className="bg-muted/30 pb-8 pt-10 px-8 lg:px-12 border-b">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                       <Button 
                         variant="outline" 
+                        size="sm"
                         onClick={() => setSelectedArticle(null)}
+                        className="w-fit rounded-xl border-dashed"
                       >
                         ← Back to Articles
                       </Button>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center space-x-1">
-                          <Eye className="w-4 h-4" />
-                          <span>{selectedArticle.views} views</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{selectedArticle.updatedAt ? new Date(selectedArticle.updatedAt).toLocaleDateString() : 'Unknown date'}</span>
-                        </div>
+                      <div className="flex items-center gap-6 text-[13px] text-muted-foreground font-medium">
+                        <span className="flex items-center gap-1.5 bg-background px-3 py-1 rounded-full border shadow-sm">
+                          <Eye className="w-4 h-4 text-blue-500" />
+                          {selectedArticle.views} views
+                        </span>
+                        <span className="flex items-center gap-1.5 bg-background px-3 py-1 rounded-full border shadow-sm">
+                          <Clock className="w-4 h-4 text-purple-500" />
+                          {selectedArticle.updatedAt ? new Date(selectedArticle.updatedAt).toLocaleDateString() : 'Active'}
+                        </span>
                       </div>
                     </div>
-                    <CardTitle className="text-2xl">{selectedArticle.title}</CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">{selectedArticle.category}</Badge>
+                    <CardTitle className="text-3xl md:text-4xl font-extrabold text-foreground mb-4 leading-tight">
+                      {selectedArticle.title}
+                    </CardTitle>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="px-3 py-1 rounded-lg bg-primary/10 text-primary border-none text-[12px] uppercase tracking-wider font-bold">
+                        {selectedArticle.category}
+                      </Badge>
                       {selectedArticle.tags?.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          <Tag className="w-3 h-3 mr-1" />
-                          {tag}
+                        <Badge key={tag} variant="outline" className="px-3 py-1 rounded-lg text-[12px] font-medium text-muted-foreground border-gray-200">
+                          #{tag.toLowerCase()}
                         </Badge>
                       ))}
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-gray dark:prose-invert max-w-none">
-                      <div style={{ whiteSpace: 'pre-line' }}>
+                  <CardContent className="p-8 lg:p-12">
+                    <div className="prose prose-blue dark:prose-invert max-w-none">
+                      <p className="text-lg text-foreground/80 leading-relaxed whitespace-pre-wrap">
                         {selectedArticle.content}
-                      </div>
+                      </p>
                     </div>
                     
-                    <div className="mt-8 pt-6 border-t">
-                      <h4 className="text-lg font-semibold mb-4">Was this article helpful?</h4>
-                      <div className="flex items-center space-x-4">
+                    <div className="mt-16 p-8 rounded-3xl bg-muted/30 border border-dashed border-muted-foreground/20 text-center space-y-6">
+                      <h4 className="text-xl font-bold text-foreground">Was this article helpful?</h4>
+                      <div className="flex items-center justify-center gap-4">
                         <Button
                           variant="outline"
+                          size="lg"
                           onClick={() => rateArticleMutation.mutate({ id: selectedArticle.id, helpful: true })}
                           disabled={rateArticleMutation.isPending}
+                          className="rounded-2xl px-8 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-all shadow-sm"
                         >
-                          <ThumbsUp className="w-4 h-4 mr-2" />
+                          <ThumbsUp className="w-5 h-5 mr-3 text-emerald-500" />
                           Yes ({selectedArticle.helpful || 0})
                         </Button>
                         <Button
                           variant="outline"
+                          size="lg"
                           onClick={() => rateArticleMutation.mutate({ id: selectedArticle.id, helpful: false })}
                           disabled={rateArticleMutation.isPending}
+                          className="rounded-2xl px-8 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all shadow-sm"
                         >
-                          <ThumbsDown className="w-4 h-4 mr-2" />
+                          <ThumbsDown className="w-5 h-5 mr-3 text-red-500" />
                           No ({selectedArticle.notHelpful || 0})
                         </Button>
                       </div>
@@ -334,100 +355,74 @@ export default function PublicHome() {
                 </Card>
               </div>
             ) : (
-              <div className="max-w-4xl mx-auto space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <BookOpen className="w-5 h-5" />
-                      <span>Knowledge Base</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                          <Input
-                            placeholder="Search articles..."
-                            value={kbSearchQuery}
-                            onChange={(e) => setKbSearchQuery(e.target.value)}
-                          />
-                        </div>
-                        <div className="w-full sm:w-48">
-                          <Select value={selectedKbCategory} onValueChange={setSelectedKbCategory}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All Categories" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Categories</SelectItem>
-                              {kbCategories.map((category) => (
-                                <SelectItem key={category} value={category}>
-                                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="space-y-10 animate-fade-in">
+                {/* Category Filter Bar */}
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button 
+                    variant={selectedKbCategory === "all" ? "default" : "outline"}
+                    className="rounded-full px-6"
+                    onClick={() => setSelectedKbCategory("all")}
+                  >
+                    All Topics
+                  </Button>
+                  {kbCategories.map((category) => (
+                    <Button 
+                      key={category}
+                      variant={selectedKbCategory === category ? "default" : "outline"}
+                      className="rounded-full px-6 capitalize"
+                      onClick={() => setSelectedKbCategory(category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
 
                 {kbLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p>Loading articles...</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div key={i} className="h-48 rounded-3xl skeleton" />
+                    ))}
                   </div>
                 ) : kbArticles.length === 0 ? (
-                  <div className="text-center py-8">
-                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      No articles found
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Try adjusting your search or browse different categories.
-                    </p>
+                  <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed">
+                    <BookOpen className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-foreground mb-2">No articles found</h3>
+                    <p className="text-muted-foreground">Try searching for something else or browse another category.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {kbArticles.map((article) => (
                       <Card 
                         key={article.id} 
-                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        className="group card-interactive border-none shadow-sm hover:shadow-2xl transition-all duration-300 rounded-3xl overflow-hidden animate-slide-up"
                         onClick={() => setSelectedArticle(article)}
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-3">
-                            <Badge variant="secondary">{article.category}</Badge>
-                            <div className="flex items-center space-x-1 text-sm text-gray-500">
-                              <Eye className="w-3 h-3" />
-                              <span>{article.views}</span>
-                            </div>
+                        <CardContent className="p-7">
+                          <div className="flex items-center justify-between mb-4">
+                            <Badge variant="outline" className="px-3 py-1 rounded-lg bg-background font-bold text-[10px] uppercase tracking-wider text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors">
+                              {article.category}
+                            </Badge>
+                            <span className="text-[12px] text-muted-foreground font-medium flex items-center gap-1">
+                              <Eye className="w-3.5 h-3.5" />
+                              {article.views}
+                            </span>
                           </div>
-                          <h3 className="font-semibold text-lg mb-2 text-gray-900 dark:text-white">
+                          <h3 className="font-extrabold text-lg mb-3 leading-tight group-hover:text-primary transition-colors line-clamp-2">
                             {article.title}
                           </h3>
                           {article.summary && (
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
+                            <p className="text-sm text-muted-foreground line-clamp-3 mb-6 leading-relaxed">
                               {article.summary}
                             </p>
                           )}
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-wrap gap-1">
-                              {article.tags?.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                            <div className="flex items-center space-x-3 text-xs text-gray-500">
-                              <div className="flex items-center space-x-1">
-                                <ThumbsUp className="w-3 h-3" />
-                                <span>{article.helpful || 0}</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <ThumbsDown className="w-3 h-3" />
-                                <span>{article.notHelpful || 0}</span>
-                              </div>
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                            <span className="text-[12px] font-bold text-primary group-hover:translate-x-1 transition-transform inline-flex items-center">
+                              Read Article <Send className="ml-1.5 w-3 h-3" />
+                            </span>
+                            <div className="flex items-center gap-3 text-[12px] font-bold text-muted-foreground/70">
+                              <span className="flex items-center gap-1">
+                                <ThumbsUp className="w-3 h-3 text-emerald-500" /> {article.helpful}
+                              </span>
                             </div>
                           </div>
                         </CardContent>
@@ -439,280 +434,331 @@ export default function PublicHome() {
             )}
           </TabsContent>
 
-          <TabsContent value="create" className="space-y-6">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Send className="w-5 h-5" />
-                  <span>Submit Support Request</span>
-                </CardTitle>
+          {/* Ticket Creation Content */}
+          <TabsContent value="create" className="animate-fade-in focus-visible:outline-none">
+            <Card className="max-w-3xl mx-auto shadow-2xl rounded-3xl border-none overflow-hidden">
+              <CardHeader className="bg-primary/5 border-b py-10 px-8 text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner ring-1 ring-primary/20">
+                  <Send className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle className="text-3xl font-extrabold tracking-tight">Submit a Request</CardTitle>
+                <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
+                  Provide as much detail as possible so our experts can assist you effectively.
+                </p>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="customerName">Your Name</Label>
+              <CardContent className="p-8 lg:p-10">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="customerName" className="font-bold text-foreground/80">Full Name</Label>
                       <Input
                         id="customerName"
                         placeholder="John Doe"
                         {...register("customerName")}
-                        className={errors.customerName ? "border-red-500" : ""}
+                        className={`h-12 rounded-xl focus:ring-primary/20 ${errors.customerName ? "border-red-400 bg-red-50/30" : "bg-muted/30 border-none"}`}
                       />
                       {errors.customerName && (
-                        <p className="text-sm text-red-600">{errors.customerName.message}</p>
+                        <p className="text-[12px] font-medium text-red-500">{errors.customerName.message}</p>
                       )}
                     </div>
 
-                    <div>
-                      <Label htmlFor="customerContact">Email Address</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="customerContact" className="font-bold text-foreground/80">Email Address</Label>
                       <Input
                         id="customerContact"
                         type="email"
                         placeholder="john@example.com"
                         {...register("customerContact")}
-                        className={errors.customerContact ? "border-red-500" : ""}
+                        className={`h-12 rounded-xl focus:ring-primary/20 ${errors.customerContact ? "border-red-400 bg-red-50/30" : "bg-muted/30 border-none"}`}
                       />
                       {errors.customerContact && (
-                        <p className="text-sm text-red-600">{errors.customerContact.message}</p>
+                        <p className="text-[12px] font-medium text-red-500">{errors.customerContact.message}</p>
                       )}
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="subject">Subject</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="subject" className="font-bold text-foreground/80">Issue Subject</Label>
                     <Input
                       id="subject"
-                      placeholder="Brief description of your issue"
+                      placeholder="e.g. Trouble accessing server logs"
                       {...register("subject")}
-                      className={errors.subject ? "border-red-500" : ""}
+                      className={`h-12 rounded-xl focus:ring-primary/20 ${errors.subject ? "border-red-400 bg-red-50/30" : "bg-muted/30 border-none"}`}
                     />
                     {errors.subject && (
-                      <p className="text-sm text-red-600">{errors.subject.message}</p>
+                      <p className="text-[12px] font-medium text-red-500">{errors.subject.message}</p>
                     )}
                   </div>
 
-                  <div>
-                    <Label htmlFor="description">Description</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="font-bold text-foreground/80">Detailed Description</Label>
                     <Textarea
                       id="description"
-                      placeholder="Please provide detailed information about your issue..."
-                      rows={5}
+                      placeholder="Please explain the problem, what you've tried, and any relevant details..."
+                      rows={6}
                       {...register("description")}
-                      className={errors.description ? "border-red-500" : ""}
+                      className={`rounded-2xl focus:ring-primary/20 min-h-[160px] ${errors.description ? "border-red-400 bg-red-50/30" : "bg-muted/30 border-none"}`}
                     />
                     {errors.description && (
-                      <p className="text-sm text-red-600">{errors.description.message}</p>
+                      <p className="text-[12px] font-medium text-red-500">{errors.description.message}</p>
                     )}
                   </div>
 
-                  <div>
-                    <Label htmlFor="attachments">Attachments (Optional)</Label>
-                    <div className="mt-1">
-                      <Input
-                        id="attachments"
-                        type="file"
-                        multiple
-                        accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt,.zip"
-                        className="file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Maximum file size: 10MB. Supported formats: JPG, PNG, PDF, DOC, TXT, ZIP
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="priority">Priority</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="font-bold text-foreground/80">Priority Level</Label>
                       <Select
                         value={watchedPriority}
                         onValueChange={(value) => setValue("priority", value as "low" | "medium" | "high")}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
+                        <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none">
+                          <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low - General question</SelectItem>
-                          <SelectItem value="medium">Medium - Issue affecting work</SelectItem>
-                          <SelectItem value="high">High - Urgent issue</SelectItem>
+                        <SelectContent className="rounded-2xl shadow-xl">
+                          <SelectItem value="low" className="rounded-xl">Low - Routine inquiry</SelectItem>
+                          <SelectItem value="medium" className="rounded-xl">Medium - Issue affecting work</SelectItem>
+                          <SelectItem value="high" className="rounded-xl font-bold text-red-600">High - Critical blocker</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div>
-                      <Label htmlFor="channel">How did you contact us?</Label>
+                    <div className="space-y-2">
+                      <Label className="font-bold text-foreground/80">Contact Preference</Label>
                       <Select
                         value={watchedChannel}
-                        onValueChange={(value) => setValue("channel", value as "email" | "whatsapp" | "twitter" | "facebook")}
+                        onValueChange={(value) => setValue("channel", value as any)}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select channel" />
+                        <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-none">
+                          <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="email">Email</SelectItem>
-                          <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                          <SelectItem value="twitter">Twitter/X</SelectItem>
-                          <SelectItem value="facebook">Facebook</SelectItem>
+                        <SelectContent className="rounded-2xl shadow-xl">
+                          <SelectItem value="email" className="rounded-xl">Email</SelectItem>
+                          <SelectItem value="whatsapp" className="rounded-xl">WhatsApp</SelectItem>
+                          <SelectItem value="twitter" className="rounded-xl">Twitter/X</SelectItem>
+                          <SelectItem value="facebook" className="rounded-xl">Facebook</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  <div className="pt-4">
+                  <div className="pt-6">
                     <Button
                       type="submit"
-                      className="w-full"
+                      className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-primary/95 shadow-xl transition-all active:scale-[0.98]"
                       disabled={createTicketMutation.isPending}
                     >
                       {createTicketMutation.isPending ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creating Ticket...
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                          Processing...
                         </>
                       ) : (
                         <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Submit Ticket
+                          Submit Now <Send className="ml-2 w-5 h-5" />
                         </>
                       )}
                     </Button>
+                    <p className="text-center text-[12px] text-muted-foreground mt-4">
+                      By submitting, you agree to our privacy policy.
+                    </p>
                   </div>
                 </form>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="status" className="space-y-6">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Search className="w-5 h-5" />
-                  <span>Check Ticket Status</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="searchType">Search by</Label>
-                    <Select value={searchType} onValueChange={(value: "id" | "email") => setSearchType(value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="id">Ticket ID</SelectItem>
-                        <SelectItem value="email">Email Address</SelectItem>
-                      </SelectContent>
-                    </Select>
+          {/* Ticket Status Content */}
+          <TabsContent value="status" className="animate-fade-in focus-visible:outline-none">
+            <div className="max-w-2xl mx-auto space-y-8 animate-slide-up">
+              <Card className="shadow-2xl rounded-3xl border-none overflow-hidden bg-background">
+                <CardHeader className="bg-muted/30 border-b pb-8 pt-10 px-8 text-center">
+                  <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner ring-1 ring-blue-500/20">
+                    <Search className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <CardTitle className="text-3xl font-extrabold tracking-tight">Track Your Request</CardTitle>
+                  <p className="text-muted-foreground mt-2">
+                    Enter your details below to see real-time updates on your support ticket.
+                  </p>
+                </CardHeader>
+                <CardContent className="p-8 space-y-6">
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-muted/30 rounded-2xl">
+                    <button 
+                      onClick={() => setSearchType("id")}
+                      className={`py-2.5 rounded-xl text-sm font-bold transition-all ${searchType === "id" ? "bg-white dark:bg-gray-800 shadow-md text-primary" : "text-muted-foreground"}`}
+                    >
+                      Ticket ID
+                    </button>
+                    <button 
+                      onClick={() => setSearchType("email")}
+                      className={`py-2.5 rounded-xl text-sm font-bold transition-all ${searchType === "email" ? "bg-white dark:bg-gray-800 shadow-md text-primary" : "text-muted-foreground"}`}
+                    >
+                      Email
+                    </button>
                   </div>
 
-                  <div>
-                    <Label htmlFor="searchQuery">
-                      {searchType === "id" ? "Ticket ID" : "Email Address"}
-                    </Label>
-                    <Input
-                      id="searchQuery"
-                      placeholder={searchType === "id" ? "Enter ticket ID..." : "Enter your email address..."}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    />
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Input
+                        className="h-14 rounded-2xl pr-12 text-lg bg-muted/30 border-none font-medium"
+                        placeholder={searchType === "id" ? "Ex: ticket-123" : "Enter associated email..."}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      />
+                      <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    </div>
+
+                    <Button
+                      onClick={handleSearch}
+                      className="w-full h-14 rounded-2xl text-lg font-bold shadow-lg transition-all active:scale-[0.98]"
+                      disabled={searchTicketsMutation.isPending}
+                    >
+                      {searchTicketsMutation.isPending ? "Searching..." : "Track My Ticket"}
+                    </Button>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <Button
-                    onClick={handleSearch}
-                    className="w-full"
-                    disabled={searchTicketsMutation.isPending}
-                  >
-                    {searchTicketsMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Searching...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-4 h-4 mr-2" />
-                        Search Tickets
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div className="max-w-4xl mx-auto space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {searchResults.length === 1 ? "Ticket Found" : `${searchResults.length} Tickets Found`}
-                </h3>
-                {searchResults.map((ticket) => {
-                  const StatusIcon = statusIcons[ticket.status as keyof typeof statusIcons];
-                  return (
-                    <Card key={ticket.id}>
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                              {ticket.subject}
-                            </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Ticket #{ticket.id}
-                            </p>
+              {/* Search Results Refined */}
+              {searchResults.length > 0 && (
+                <div className="space-y-6 animate-slide-up">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="text-xl font-extrabold flex items-center gap-2">
+                      <div className="w-2 h-6 bg-primary rounded-full" />
+                      Results Found ({searchResults.length})
+                    </h3>
+                  </div>
+                  {searchResults.map((ticket, idx) => (
+                    <Card key={ticket.id} className="group card-elevated rounded-3xl border-none shadow-xl overflow-hidden mb-4 [animation-delay:calc(val(idx)*100ms)]">
+                      <div className="flex flex-col md:flex-row">
+                        <div className="md:w-3 border-r bg-muted/30 group-hover:bg-primary transition-colors" />
+                        <CardContent className="p-7 flex-1">
+                          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
+                            <div className="space-y-1">
+                              <h4 className="text-xl font-extrabold text-foreground group-hover:text-primary transition-colors">
+                                {ticket.subject}
+                              </h4>
+                              <p className="text-sm font-bold text-muted-foreground/60 uppercase tracking-widest">
+                                Ticket #{ticket.id}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge className={`px-3 py-1 rounded-lg text-[10px] uppercase font-black tracking-widest ${
+                                ticket.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
+                                ticket.status === 'open' ? 'bg-blue-100 text-blue-700' :
+                                'bg-amber-100 text-amber-700'
+                              }`}>
+                                {ticket.status.replace("-", " ")}
+                              </Badge>
+                              <Badge className={`px-3 py-1 rounded-lg text-[10px] uppercase font-black tracking-widest ${
+                                ticket.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                ticket.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                'bg-emerald-100 text-emerald-700'
+                              }`}>
+                                {ticket.priority}
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge className={statusColors[ticket.status as keyof typeof statusColors]}>
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {ticket.status.replace("-", " ").toUpperCase()}
-                            </Badge>
-                            <Badge className={priorityColors[ticket.priority as keyof typeof priorityColors]}>
-                              {ticket.priority.toUpperCase()}
-                            </Badge>
+                          
+                          <p className="text-foreground/70 leading-relaxed mb-8 line-clamp-2">
+                            {ticket.description}
+                          </p>
+                          
+                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8 pt-6 border-t border-gray-100">
+                            <div className="space-y-0.5">
+                              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Submitted On</p>
+                              <p className="text-sm font-bold">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'Unknown'}</p>
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Channel</p>
+                              <p className="text-sm font-bold capitalize">{ticket.channel}</p>
+                            </div>
+                            <div className="space-y-0.5 col-span-2 lg:col-span-1">
+                              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Customer</p>
+                              <p className="text-sm font-bold truncate">{ticket.customerName || 'Anonymous'}</p>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <p className="text-gray-700 dark:text-gray-300 mb-4">
-                          {ticket.description}
-                        </p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <div>
-                            <strong>Created:</strong> {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'Unknown'}
-                          </div>
-                          <div>
-                            <strong>Channel:</strong> {ticket.channel.charAt(0).toUpperCase() + ticket.channel.slice(1)}
-                          </div>
-                          <div>
-                            <strong>Customer:</strong> {ticket.customerName || ticket.customerContact}
-                          </div>
-                        </div>
-                      </CardContent>
+                        </CardContent>
+                      </div>
                     </Card>
-                  );
-                })}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
 
-        {/* Contact Information */}
-        <div className="mt-16 text-center">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {whitelabelConfig?.contactSectionTitle || "Need immediate assistance?"}
-          </h3>
-          <div className="flex flex-col items-center gap-6 max-w-md mx-auto">
-            <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
-              <Mail className="w-5 h-5" />
-              <span>{whitelabelConfig?.supportEmail || "support@supporthub.com"}</span>
+        {/* Improved Call-to-Action / Contact */}
+        <div className="mt-32 relative text-center">
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+            <h2 className="text-[160px] font-black leading-none uppercase">Support</h2>
+          </div>
+          <div className="relative z-10 space-y-10">
+            <div className="space-y-4">
+              <h3 className="text-4xl font-extrabold tracking-tight text-foreground">
+                {whitelabelConfig?.contactSectionTitle || "Still have questions?"}
+              </h3>
+              <p className="text-muted-foreground text-lg max-w-xl mx-auto font-medium">
+                Our support experts are available around the clock to help you solve even the most complex technical challenges.
+              </p>
             </div>
-            {whitelabelConfig?.isPhoneNumberEnabled && (
-              <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
-                <Phone className="w-5 h-5" />
-                <span>{whitelabelConfig?.supportPhone || "1-800-SUPPORT"}</span>
-              </div>
-            )}
+            
+            <div className="flex flex-wrap justify-center gap-6">
+              <a href={`mailto:${whitelabelConfig?.supportEmail || "support@supporthub.com"}`} className="group p-6 rounded-3xl bg-card border hover:shadow-2xl hover:border-primary transition-all duration-300 w-full max-w-sm flex items-center gap-5 text-left">
+                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:rotate-6 transition-all">
+                  <Mail className="w-7 h-7 text-primary group-hover:text-white transition-colors" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-foreground group-hover:text-primary transition-colors">Email Us</h4>
+                  <p className="text-sm font-bold text-muted-foreground">{whitelabelConfig?.supportEmail || "support@supporthub.com"}</p>
+                </div>
+              </a>
+              
+              {whitelabelConfig?.isPhoneNumberEnabled && (
+                <a href={`tel:${whitelabelConfig?.supportPhone}`} className="group p-6 rounded-3xl bg-card border hover:shadow-2xl hover:border-primary transition-all duration-300 w-full max-w-sm flex items-center gap-5 text-left">
+                  <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-500 group-hover:-rotate-6 transition-all">
+                    <Phone className="w-7 h-7 text-blue-500 group-hover:text-white transition-colors" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-foreground group-hover:text-blue-500 transition-colors">Call Support</h4>
+                    <p className="text-sm font-bold text-muted-foreground">{whitelabelConfig?.supportPhone || "+1-800-SUPPORT"}</p>
+                  </div>
+                </a>
+              )}
+            </div>
+            
+            <div className="pt-8">
+              <Button variant="link" className="text-muted-foreground font-bold hover:text-primary transition-colors">
+                View detailed FAQs <BookOpen className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Modern Footer */}
+      <footer className="border-t bg-card/50 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center space-x-2 grayscale opacity-60">
+            <MessageSquare className="w-5 h-5" />
+            <span className="font-bold text-sm tracking-widest uppercase">SupportHub</span>
+          </div>
+          <div className="text-[13px] font-medium text-muted-foreground/60 text-center">
+            {whitelabelConfig?.footerText || "© 2024 SupportHub. All rights reserved. Premium Customer Experience Cloud."}
+          </div>
+          <div className="flex items-center gap-6">
+            <a href="#" className="text-[13px] font-bold text-muted-foreground hover:text-primary transition-colors underline decoration-dotted underline-offset-4">Privacy</a>
+            <a href="#" className="text-[13px] font-bold text-muted-foreground hover:text-primary transition-colors underline decoration-dotted underline-offset-4">Terms</a>
+          </div>
+        </div>
+      </footer>
+      
+      {/* Live Chat Widget Integration */}
+      {isChatEnabled && <LiveChatWidget />}
+    </div>
+  );
+}
+main>
       
       {/* Footer */}
       <footer className="bg-white dark:bg-gray-800 border-t">
