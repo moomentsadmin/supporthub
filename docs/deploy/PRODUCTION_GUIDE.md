@@ -27,7 +27,9 @@ For a self-contained deployment using local storage and database:
     ```
     Set `DOMAIN` to your server's domain pointing to the IP.
     Set `EMAIL` for SSL notifications.
-    Leave `DATABASE_URL` pointing to `db:5432` (internal).
+    Set `POSTGRES_PASSWORD` to a strong random value (e.g. `openssl rand -base64 32`).
+    Ensure `DATABASE_URL` uses the same password: `postgresql://supporthub:<your-password>@db:5432/supporthub`.
+    Leave `DATABASE_URL` host as `db` (the internal Docker container name).
 
 3.  **Deploy**:
     ```bash
