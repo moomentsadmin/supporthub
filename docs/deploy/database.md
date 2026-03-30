@@ -33,7 +33,7 @@ aws rds create-db-instance \
     --db-instance-identifier supporthub-db \
     --db-instance-class db.t3.micro \
     --engine postgres \
-    --engine-version 14.9 \
+    --engine-version 15.6 \
     --master-username supporthub \
     --master-user-password YourSecurePassword123 \
     --allocated-storage 20 \
@@ -76,7 +76,7 @@ DATABASE_URL=postgresql://doadmin:password@db-host.db.ondigitalocean.com:25060/d
 # Create managed database
 doctl databases create supporthub-db \
     --engine postgres \
-    --version 14 \
+    --version 15 \
     --region nyc1 \
     --size db-s-1vcpu-1gb \
     --num-nodes 1
@@ -120,7 +120,7 @@ az postgres server create \
     --admin-user supporthub \
     --admin-password 'YourSecurePassword123!' \
     --sku-name GP_Gen5_2 \
-    --version 14
+    --version 15
 
 # Create database
 az postgres db create \
@@ -148,7 +148,7 @@ DATABASE_URL=postgresql://username:password@ip-address:5432/database?sslmode=req
 ```bash
 # Create Cloud SQL instance
 gcloud sql instances create supporthub-db \
-    --database-version=POSTGRES_14 \
+    --database-version=POSTGRES_15 \
     --tier=db-f1-micro \
     --region=us-central1 \
     --root-password=YourSecurePassword123

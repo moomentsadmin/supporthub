@@ -77,8 +77,17 @@ To use a managed database service (Recommended for high availability):
     ```
 
 3.  Update `compose.production.yml`:
-    -   Remove the `db` service.
-    -   Remove `depends_on: db` from `app`.
+    -   Remove the `db` service block entirely.
+    -   Remove `depends_on: db` from the `app` service.
+    -   Update the `DATABASE_URL` env var in the `app` service to use your managed DB connection string directly (the default value points to the internal `db` container and must be replaced):
+        ```yaml
+        # Before (internal DB - remove this):
+        DATABASE_URL: postgresql://${POSTGRES_USER:-supporthub}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-supporthub}
+
+        # After (managed DB - use your actual connection string):
+        DATABASE_URL: ${DATABASE_URL}
+        ```
+    -   Set `DATABASE_URL` in your `.env` file to the full managed DB connection string (with `?sslmode=require`).
 
 ### File Storage Options
 
