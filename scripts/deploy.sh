@@ -52,6 +52,12 @@ echo -e "${GREEN}Deploying with Docker Compose...${NC}"
 # Rebuild app and nginx, and force verify SSL
 docker compose -f compose.production.yml up -d --build
 
+# Run database migrations (creates/updates schema on first run and after updates)
+echo -e "${GREEN}Running database migrations...${NC}"
+docker compose -f compose.production.yml exec -T app npm run db:push && \
+    echo -e "${GREEN}✅ Database migrations applied.${NC}" || \
+    echo -e "${YELLOW}⚠️  Migration step skipped or failed — app may need db:push if this is a first run.${NC}"
+
 echo -e "${GREEN}Deployment started. Waiting for SSL initialization...${NC}"
 
 # Monitor ssl_init container

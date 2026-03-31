@@ -48,66 +48,80 @@ A comprehensive customer support ticket management system built with modern web 
 
 ## 🐳 Deployment
 
-We support deploying SupportHub via Docker, which is the recommended method for consistent environments.
+SupportHub is deployed via Docker Compose. Four production configurations are supported:
 
-### 1. Prerequisites
-- Docker and Docker Compose installed
-- A `.env` file configured (copy from `.env.example` and update values)
+| Setup | Compose File | Script | Use When |
+|-------|-------------|--------|----------|
+| SSL + Internal DB | `compose.production.yml` | `./scripts/deploy.sh` | Server directly on internet |
+| SSL + Managed DB | `compose.production.yml` (edit) | `./scripts/deploy.sh` | RDS / Azure / DO database |
+| No-SSL + Internal DB | `compose.nossl.yml` | `./scripts/deploy-nossl.sh` | Behind Nginx Proxy Manager / Traefik |
+| No-SSL + Managed DB | `compose.nossl.yml` (edit) | `./scripts/deploy-nossl.sh` | Proxy + managed database |
 
-### 2. Configuration (`.env`)
-Ensure you set the following in your `.env` file:
+### Quick Start
+
 ```bash
-DATABASE_URL=postgresql://supporthub:securepassword123@db:5432/supporthub
-SESSION_SECRET=your_secure_random_string
-DOMAIN=your-domain.com # For SSL deployment
-EMAIL=admin@your-domain.com # For SSL certificate notifications
+# 1. Clone and configure
+git clone <repository_url> supporthub && cd supporthub
+cp .env.example .env
+nano .env   # Fill in required values (see below)
+
+# 2a. Deploy WITH SSL (Let's Encrypt — server must have a real domain)
+chmod +x scripts/deploy.sh && ./scripts/deploy.sh
+
+# 2b. Deploy WITHOUT SSL (behind Nginx Proxy Manager, Traefik, Cloudflare, etc.)
+chmod +x scripts/deploy-nossl.sh && ./scripts/deploy-nossl.sh
 ```
 
-### 3. Deployment Options
+### Minimum `.env` for Internal DB
 
-#### Option A: SSL Deployment (Recommended Production)
-Automatically sets up Nginx with Let's Encrypt for HTTPS. Ideal for direct internet exposure.
+```env
+NODE_ENV=production
+DOMAIN=yourdomain.com
+EMAIL=you@yourdomain.com
+SESSION_SECRET=<openssl rand -base64 48>
+TRUST_PROXY=1
 
-```bash
-docker compose -f compose.production.yml up -d --build
+POSTGRES_USER=supporthub
+POSTGRES_PASSWORD=<openssl rand -base64 32>
+POSTGRES_DB=supporthub
+DATABASE_URL=postgresql://supporthub:<same-password>@db:5432/supporthub
 ```
-> The application will be available at `https://your-domain.com`.
 
-#### Option B: Non-SSL Deployment (Behind Load Balancer)
-If you are terminating SSL elsewhere (e.g. AWS ALB, Cloudflare), use this lighter configuration which exposes the app on port 5000.
+### Minimum `.env` for Managed DB (RDS / Azure / DO)
 
-```bash
-docker compose -f compose.nossl.yml up -d --build
+```env
+NODE_ENV=production
+DOMAIN=yourdomain.com
+EMAIL=you@yourdomain.com
+SESSION_SECRET=<openssl rand -base64 48>
+TRUST_PROXY=1
+
+DATABASE_URL=postgresql://user:password@your-db-host:5432/supporthub?sslmode=require
 ```
-> The application will be available at `http://your-server-ip:5000`.
 
-#### Option C: Local Development with Docker
-For testing and development on your local machine. Mounts source code for live updates.
+> See [docs/deploy/PRODUCTION_GUIDE.md](docs/deploy/PRODUCTION_GUIDE.md) for full instructions including managed DB compose edits, proxy configuration examples, and maintenance commands.
+
+### Local Development
 
 ```bash
-# Uses self-signed certificate for https://localhost
+# Uses self-signed certificate on https://localhost
 docker compose -f compose.dev.yml up -d --build
 ```
-> Access at `https://localhost` (accept the self-signed certificate warning).
 
 ## 🔒 Default Credentials
 
-**Admin Portal**: `/admin`
-- Email: `admin@supporthub.com`
-- Password: `admin123`
+| Portal | URL | Email | Password |
+|--------|-----|-------|----------|
+| Admin | `/admin` | `admin@supporthub.com` | `admin123` |
+| Agent | `/` | `agent@example.com` | `password123` |
 
-**Agent Portal**: `/agent`
-- Email: `agent@supporthub.com`
-- Password: `agent123`
-
-> ⚠️ **IMPORTANT**: Change these passwords immediately upon deployment!
+> ⚠️ Change both passwords immediately after first login.
 
 ## 📚 Documentation
 
-For advanced platform-specific deployment guides (AWS, Azure, Digital Ocean), refer to the `docs/deploy/` directory.
-
-- [Troubleshooting Guide](docs/deploy/troubleshooting.md)
-- [Database Configuration](docs/deploy/database.md)
+- [Production Deployment Guide](docs/deploy/PRODUCTION_GUIDE.md) — all deployment paths, proxy setup, maintenance
+- [Database Configuration](docs/deploy/database.md) — managed DB setup for all providers
+- [Troubleshooting](docs/deploy/troubleshooting.md)
 
 ## 🤝 Contributing
 
